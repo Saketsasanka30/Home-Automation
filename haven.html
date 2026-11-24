@@ -13,18 +13,19 @@
        ========================================================================== */
     :root {
       --grad: linear-gradient(135deg, #e3fbb0 0%, #8ef0d6 45%, #3cc4b4 100%);
+      --grad-warm: linear-gradient(135deg, #ffe29f 0%, #ffa99f 45%, #ff719a 100%);
       --m2: #7ee8d0;
       --m3: #3cc4b4;
       --mint-glow: rgba(142, 240, 214, 0.4);
       --lime-glow: rgba(227, 251, 176, 0.5);
       
       --glass-win: rgba(86, 90, 82, 0.38);
-      --glass-card: rgba(255, 255, 255, 0.075);
-      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-card: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.16);
       --glass-win-border: rgba(255, 255, 255, 0.22);
       
       --text: #ffffff;
-      --text-muted: rgba(255, 255, 255, 0.62);
+      --text-muted: rgba(255, 255, 255, 0.65);
       --text-dark: #1b1d19;
       --text-teal: #13443e;
       
@@ -72,7 +73,7 @@
       backdrop-filter: blur(18px) saturate(1.2);
       -webkit-backdrop-filter: blur(18px) saturate(1.2);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
-      transition: background 0.4s var(--out), border-color 0.4s var(--out), transform 0.4s var(--out);
+      transition: background 0.4s var(--out), border-color 0.4s var(--out), transform 0.4s var(--out), box-shadow 0.4s var(--out);
     }
 
     /* ==========================================================================
@@ -83,6 +84,9 @@
       inset: 0;
       perspective: 1600px;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #room {
@@ -136,8 +140,18 @@
       transition: opacity 1s var(--ease);
     }
 
+    /* Color tint overlay based on lighting temperature */
+    #room-tint {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: color;
+      opacity: 0;
+      transition: opacity 0.8s var(--out), background-color 0.8s var(--out);
+    }
+
     /* ==========================================================================
-       3. SPATIAL UI CONTAINER
+       3. SPATIAL UI CONTAINER & PRECISION CENTERING
        ========================================================================== */
     #ui-layer {
       position: absolute;
@@ -146,22 +160,37 @@
       transform-style: preserve-3d;
       will-change: transform;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    #ui-layer > * {
+    /* Centered 144rem x 81rem Artboard Container */
+    #spatial-canvas {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 144rem;
+      height: 81rem;
+      pointer-events: none;
+      transform-style: preserve-3d;
+    }
+
+    #spatial-canvas > * {
       pointer-events: auto;
     }
 
     /* ==========================================================================
-       4. TOP TAB BAR
+       4. TOP TAB BAR (SYMMETRICALLY CENTERED)
        ========================================================================== */
     #tab-bar {
       position: absolute;
-      top: 3.2rem;
+      top: 2.8rem;
       left: 50%;
       transform: translateX(-50%);
-      height: 6rem;
-      padding: 0.6rem;
+      height: 5.8rem;
+      padding: 0.5rem;
       border-radius: 999rem;
       background: var(--glass-win);
       display: flex;
@@ -179,11 +208,11 @@
     .tab-pill {
       position: relative;
       height: 4.8rem;
-      padding: 0 2.2rem;
+      padding: 0 2rem;
       border-radius: 999rem;
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.9rem;
       font-size: 1.45rem;
       font-weight: 600;
       color: var(--text);
@@ -211,8 +240,8 @@
 
     .tab-indicator {
       position: absolute;
-      top: 0.6rem;
-      bottom: 0.6rem;
+      top: 0.5rem;
+      bottom: 0.5rem;
       border-radius: 999rem;
       background: #ffffff;
       box-shadow: 0 0.8rem 2.4rem rgba(0, 0, 0, 0.25);
@@ -248,13 +277,42 @@
       stroke-width: 2.5;
     }
 
+    /* Live sync status badge */
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.4rem 1rem;
+      border-radius: 999rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--m2);
+      margin-left: 0.6rem;
+    }
+
+    .sync-dot {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 50%;
+      background: var(--m2);
+      box-shadow: 0 0 0.8rem var(--m2);
+      animation: pulseSync 2s infinite;
+    }
+
+    @keyframes pulseSync {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
     /* ==========================================================================
-       5. LEFT ICON RAIL
+       5. LEFT ICON RAIL (PERFECTLY BALANCED)
        ========================================================================== */
     #icon-rail {
       position: absolute;
-      left: 11.4rem;
-      top: 27.4rem;
+      left: 11.6rem;
+      top: 27.2rem;
       width: 6.4rem;
       padding: 0.8rem 0;
       border-radius: 999rem;
@@ -313,7 +371,7 @@
       left: calc(100% + 1.4rem);
       padding: 0.6rem 1.4rem;
       border-radius: 999rem;
-      background: rgba(30, 32, 28, 0.75);
+      background: rgba(30, 32, 28, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(16px);
       font-size: 1.25rem;
@@ -325,6 +383,7 @@
       transform: translateX(-0.8rem);
       transition: opacity 0.25s var(--out), transform 0.3s var(--spring);
       box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.3);
+      z-index: 30;
     }
 
     .rail-btn:hover .rail-tooltip {
@@ -333,14 +392,14 @@
     }
 
     /* ==========================================================================
-       6. MAIN SPATIAL WINDOW & CARDS
+       6. SPATIAL MAIN WINDOW & GRID ARCHITECTURE
        ========================================================================== */
     #main-window {
       position: absolute;
-      left: 20.4rem;
-      top: 11.2rem;
+      left: 20.6rem;
+      top: 10.4rem;
       width: 111.8rem;
-      height: 63.4rem;
+      height: 64.0rem;
       border-radius: 4.2rem;
       background: var(--glass-win);
       z-index: 10;
@@ -370,24 +429,26 @@
       transform: translateY(0.8rem) scale(0.985);
     }
 
-    /* 6.1 LIVE CAMERA CARD */
+    /* ==========================================================================
+       6.1 LIVE CAMERA CARD WITH REAL CONTROLS
+       ========================================================================== */
     #card-camera {
-      left: 2.2rem;
-      top: 1.8rem;
-      width: 53.6rem;
-      height: 27rem;
-      cursor: pointer;
+      left: 2.0rem;
+      top: 2.0rem;
+      width: 54.0rem;
+      height: 27.0rem;
+      cursor: default;
       z-index: 5;
       transition: all 0.8s var(--ease);
     }
 
     #card-camera.expanded {
-      left: 1.8rem;
-      top: 1.8rem;
-      width: 108.2rem;
-      height: 59.8rem;
+      left: 2.0rem;
+      top: 2.0rem;
+      width: 107.8rem;
+      height: 60.0rem;
       z-index: 40;
-      box-shadow: 0 4rem 12rem rgba(0, 0, 0, 0.6);
+      box-shadow: 0 4rem 12rem rgba(0, 0, 0, 0.7);
     }
 
     .cam-feed-box {
@@ -407,6 +468,7 @@
       transform-origin: 62% 45%;
       filter: contrast(1.08);
       display: block;
+      transition: filter 0.4s var(--out);
     }
 
     #cam-img-el {
@@ -416,6 +478,13 @@
       height: 100%;
       object-fit: cover;
       display: none;
+      transition: filter 0.4s var(--out);
+    }
+
+    /* Night vision mode */
+    .cam-feed-box.night-vision #cam-video-el,
+    .cam-feed-box.night-vision #cam-img-el {
+      filter: contrast(1.4) brightness(0.9) hue-rotate(95deg) saturate(2.2);
     }
 
     .cam-feed-box.kenburns #cam-img-el {
@@ -427,7 +496,6 @@
       100% { transform: scale(1.15) translate(-2%, -2%); }
     }
 
-    /* CRT scanlines */
     .cam-scanlines {
       position: absolute;
       inset: 0;
@@ -446,9 +514,48 @@
     .cam-gradients {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.65) 100%);
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55) 0%, transparent 35%, transparent 60%, rgba(0, 0, 0, 0.7) 100%);
       pointer-events: none;
       z-index: 2;
+    }
+
+    /* Simulated motion tracking HUD box */
+    .cam-motion-hud {
+      position: absolute;
+      width: 14rem;
+      height: 11rem;
+      border: 2px dashed var(--m2);
+      border-radius: 1.2rem;
+      background: rgba(60, 196, 180, 0.12);
+      top: 35%;
+      left: 45%;
+      z-index: 3;
+      display: none;
+      box-shadow: 0 0 1.6rem var(--mint-glow);
+      pointer-events: none;
+      animation: hudScan 2.5s ease-in-out infinite alternate;
+    }
+
+    .cam-motion-hud.active {
+      display: block;
+    }
+
+    .cam-motion-tag {
+      position: absolute;
+      top: -2.2rem;
+      left: 0;
+      background: var(--m2);
+      color: var(--text-dark);
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.4rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.04rem;
+    }
+
+    @keyframes hudScan {
+      0% { transform: scale(0.96) translate(-5px, -5px); }
+      100% { transform: scale(1.04) translate(5px, 5px); }
     }
 
     .cam-top-row {
@@ -499,35 +606,80 @@
       letter-spacing: 0.08rem;
     }
 
-    .cam-bottom-label {
+    .cam-bottom-row {
       position: absolute;
       bottom: 1.8rem;
       left: 2rem;
+      right: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       z-index: 4;
+    }
+
+    .cam-bottom-label {
       font-size: 1.55rem;
       font-weight: 600;
       text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
     }
 
-    .cam-expand-hint {
-      position: absolute;
-      bottom: 1.8rem;
-      right: 2rem;
-      z-index: 4;
-      width: 3.4rem;
-      height: 3.4rem;
+    /* Functional Camera Control Buttons */
+    .cam-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .cam-ctrl-btn {
+      width: 3.6rem;
+      height: 3.6rem;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       color: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(10px);
-      transition: transform 0.3s var(--spring);
+      cursor: pointer;
+      transition: transform 0.25s var(--spring), background 0.2s, color 0.2s;
     }
 
-    #card-camera:hover .cam-expand-hint {
+    .cam-ctrl-btn:hover {
       transform: scale(1.15);
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .cam-ctrl-btn.active {
+      background: var(--m2);
+      color: var(--text-dark);
+      border-color: var(--m2);
+    }
+
+    .cam-ctrl-btn svg {
+      width: 1.8rem;
+      height: 1.8rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Camera flash effect on snapshot */
+    .cam-flash {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.08s ease-out;
+    }
+
+    .cam-flash.flashing {
+      opacity: 0.85;
     }
 
     /* Wipe curtain for room switches */
@@ -550,12 +702,14 @@
       clip-path: inset(100% 0 0 0);
     }
 
-    /* 6.2 THERMOSTAT DIAL CARD */
+    /* ==========================================================================
+       6.2 THERMOSTAT DIAL CARD
+       ========================================================================== */
     #card-thermostat {
       left: 57.8rem;
-      top: 1.8rem;
-      width: 51.8rem;
-      height: 40.2rem;
+      top: 2.0rem;
+      width: 52.0rem;
+      height: 40.0rem;
       padding: 2.4rem 2.8rem;
       display: flex;
       flex-direction: column;
@@ -601,6 +755,7 @@
       border-radius: 50%;
       background: var(--m2);
       box-shadow: 0 0 0.8rem var(--m2);
+      transition: background 0.3s, box-shadow 0.3s;
     }
 
     .dial-status-dot.orange {
@@ -624,11 +779,12 @@
       justify-content: center;
       color: var(--text-muted);
       cursor: pointer;
-      transition: transform 0.5s var(--spring), color 0.3s;
+      transition: transform 0.5s var(--spring), color 0.3s, background 0.25s;
     }
 
     .dial-gear-btn:hover {
       color: #ffffff;
+      background: rgba(255, 255, 255, 0.18);
       transform: rotate(120deg);
     }
 
@@ -643,17 +799,16 @@
     /* SVG Dial Container */
     .dial-visual-wrap {
       position: relative;
-      width: 26rem;
-      height: 26rem;
+      width: 25.5rem;
+      height: 25.5rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: -1rem;
     }
 
     .dial-svg {
-      width: 26rem;
-      height: 26rem;
+      width: 25.5rem;
+      height: 25.5rem;
       overflow: visible;
       touch-action: none;
       cursor: grab;
@@ -742,27 +897,28 @@
       flex-direction: column;
       align-items: center;
       gap: 0.2rem;
-      margin-top: -1.6rem;
     }
 
     .dial-temp-value {
-      font-size: 4.6rem;
+      font-size: 4.4rem;
       font-weight: 700;
       line-height: 1;
       letter-spacing: -0.04rem;
     }
 
     .dial-sub-target {
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       color: var(--text-muted);
     }
 
-    /* 6.3 SCENE PILL */
+    /* ==========================================================================
+       6.3 SCENE PILL (CYCLE THROUGH 4 SCENES)
+       ========================================================================== */
     #card-scene {
-      left: 2.2rem;
+      left: 2.0rem;
       top: 30.6rem;
       width: 26.2rem;
-      height: 7rem;
+      height: 7.2rem;
       padding: 0 1.2rem 0 1rem;
       border-radius: 999rem;
       display: flex;
@@ -790,6 +946,7 @@
       color: var(--text-teal);
       box-shadow: 0 0.4rem 1.6rem var(--mint-glow);
       flex-shrink: 0;
+      transition: background 0.4s var(--out);
     }
 
     .scene-icon-circ svg {
@@ -866,12 +1023,14 @@
       }
     }
 
-    /* 6.4 SMALL APPLIANCE CARD (Robot Vacuum / Dishwasher / Towel / Purifier) */
+    /* ==========================================================================
+       6.4 SMALL APPLIANCE CARD WITH REAL ACTIONS
+       ========================================================================== */
     #card-small-appliance {
-      left: 2.2rem;
-      top: 39.4rem;
+      left: 2.0rem;
+      top: 39.2rem;
       width: 26.2rem;
-      height: 22.2rem;
+      height: 22.8rem;
       padding: 2rem;
       display: flex;
       flex-direction: column;
@@ -899,7 +1058,12 @@
       align-items: center;
       justify-content: center;
       color: #ffffff;
-      transition: transform 0.4s var(--spring);
+      transition: transform 0.4s var(--spring), background 0.3s;
+      cursor: pointer;
+    }
+
+    .small-icon-circ:hover {
+      background: rgba(255, 255, 255, 0.18);
     }
 
     .small-icon-circ.spinning svg {
@@ -921,13 +1085,39 @@
       text-align: right;
     }
 
+    .small-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.8rem;
+    }
+
+    .small-action-pill {
+      flex: 1;
+      padding: 0.5rem 0.8rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #ffffff;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.25s, transform 0.2s var(--spring);
+    }
+
+    .small-action-pill:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.04);
+    }
+
     .small-progress-track {
       width: 100%;
       height: 0.6rem;
       border-radius: 999rem;
       background: rgba(255, 255, 255, 0.1);
       overflow: hidden;
-      margin: 1.2rem 0;
+      margin: 0.8rem 0;
       display: none;
     }
 
@@ -952,7 +1142,7 @@
     .small-labels {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.3rem;
     }
 
     .small-title {
@@ -965,7 +1155,7 @@
       color: var(--text-muted);
     }
 
-    /* Reusable Toggle switch */
+    /* Spatial Toggle switch */
     .spatial-toggle {
       width: 4.8rem;
       height: 2.8rem;
@@ -1001,13 +1191,15 @@
       background: #1b1d19;
     }
 
-    /* 6.5 GRADIENT CARD: CEILING LIGHTS */
+    /* ==========================================================================
+       6.5 GRADIENT CARD: CEILING LIGHTS & COLOR PRESETS
+       ========================================================================== */
     #card-lights {
-      left: 30.2rem;
+      left: 29.8rem;
       top: 30.6rem;
-      width: 25.6rem;
-      height: 22.4rem;
-      padding: 2.2rem;
+      width: 26.2rem;
+      height: 22.8rem;
+      padding: 2.0rem;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -1068,6 +1260,37 @@
       color: var(--text-muted);
     }
 
+    /* Color Temperature Preset Chips */
+    .lights-temps-row {
+      display: flex;
+      gap: 0.6rem;
+      margin: 0.6rem 0;
+    }
+
+    .temp-chip {
+      flex: 1;
+      padding: 0.45rem 0.2rem;
+      border-radius: 999rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: inherit;
+      transition: transform 0.2s var(--spring), background 0.2s, border-color 0.2s;
+    }
+
+    .temp-chip:hover {
+      transform: scale(1.05);
+    }
+
+    .temp-chip.active {
+      background: rgba(255, 255, 255, 0.35);
+      border-color: rgba(255, 255, 255, 0.6);
+      font-weight: 700;
+    }
+
     .lights-bottom-row {
       display: flex;
       justify-content: space-between;
@@ -1077,7 +1300,7 @@
     .lights-labels {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.3rem;
     }
 
     .lights-title {
@@ -1090,12 +1313,14 @@
       color: var(--text-muted);
     }
 
-    /* 6.6 BRIGHTNESS SLIDER */
+    /* ==========================================================================
+       6.6 BRIGHTNESS SLIDER WITH FINE CONTROLS
+       ========================================================================== */
     #card-brightness {
-      left: 30.2rem;
+      left: 29.8rem;
       top: 54.8rem;
-      width: 25.6rem;
-      height: 7rem;
+      width: 26.2rem;
+      height: 7.2rem;
       padding: 0;
       border-radius: 999rem;
       position: absolute;
@@ -1131,9 +1356,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 2rem;
-      pointer-events: none;
+      padding: 0 1.6rem;
       z-index: 2;
+    }
+
+    .slider-left-ctrls {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
     }
 
     .slider-sun-icon {
@@ -1141,6 +1371,7 @@
       height: 2.4rem;
       color: var(--text-teal);
       transition: transform 0.1s linear;
+      pointer-events: none;
     }
 
     .slider-sun-icon svg {
@@ -1151,22 +1382,46 @@
       stroke-width: 2.2;
     }
 
+    .slider-step-btn {
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 50%;
+      background: rgba(19, 68, 62, 0.18);
+      border: 1px solid rgba(19, 68, 62, 0.25);
+      color: var(--text-teal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring), background 0.2s;
+    }
+
+    .slider-step-btn:hover {
+      transform: scale(1.15);
+      background: rgba(19, 68, 62, 0.32);
+    }
+
     .slider-pct {
       font-size: 1.8rem;
       font-weight: 700;
       color: var(--text-teal);
+      pointer-events: none;
     }
 
-    /* 6.7 MUSIC PLAYER */
+    /* ==========================================================================
+       6.7 MUSIC PLAYER (WITH LIVE WEB AUDIO SYNTH & CONTROLS)
+       ========================================================================== */
     #card-music {
       left: 57.8rem;
       top: 43.6rem;
-      width: 51.8rem;
-      height: 18.2rem;
-      padding: 1.6rem;
+      width: 52.0rem;
+      height: 18.4rem;
+      padding: 1.6rem 2rem;
       display: flex;
       align-items: center;
-      gap: 2rem;
+      gap: 2.2rem;
     }
 
     .music-art-wrap {
@@ -1203,7 +1458,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 0.4rem 0.6rem 0.4rem 0;
+      padding: 0.2rem 0;
       overflow: hidden;
     }
 
@@ -1297,12 +1552,12 @@
 
     .music-seek-bar {
       width: 100%;
-      height: 0.4rem;
+      height: 0.5rem;
       border-radius: 999rem;
       background: rgba(255, 255, 255, 0.14);
       cursor: pointer;
       position: relative;
-      margin: 0.6rem 0;
+      margin: 0.4rem 0;
     }
 
     .music-seek-fill {
@@ -1314,6 +1569,12 @@
     }
 
     .music-controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .music-main-btns {
       display: flex;
       align-items: center;
       gap: 1.4rem;
@@ -1336,6 +1597,10 @@
     .music-btn:hover {
       color: #ffffff;
       transform: scale(1.15);
+    }
+
+    .music-btn.active {
+      color: var(--m2);
     }
 
     .music-btn svg {
@@ -1370,8 +1635,233 @@
       fill: currentColor;
     }
 
+    /* Music Volume Slider */
+    .music-vol-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .music-vol-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+
+    .music-vol-btn:hover {
+      color: #ffffff;
+    }
+
+    .music-vol-btn svg {
+      width: 1.6rem;
+      height: 1.6rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .music-vol-slider {
+      width: 7rem;
+      height: 0.4rem;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 999rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .music-vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 1.2rem;
+      height: 1.2rem;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
     /* ==========================================================================
-       7. TOAST NOTIFICATION & ?rec CURSOR
+       7. FUNCTIONAL OVERLAY MODALS (SETTINGS, THERMOSTAT, SECURITY, LIGHTING)
+       ========================================================================== */
+    .spatial-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(12, 14, 11, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      z-index: 80;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s var(--out);
+    }
+
+    .spatial-modal-backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .spatial-modal-card {
+      width: 58rem;
+      max-width: 90vw;
+      border-radius: 3.4rem;
+      background: rgba(40, 44, 38, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 3rem 8rem rgba(0, 0, 0, 0.6);
+      padding: 3.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.4rem;
+      transform: scale(0.92) translateY(2rem);
+      transition: transform 0.4s var(--spring);
+    }
+
+    .spatial-modal-backdrop.show .spatial-modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+    }
+
+    .modal-close-btn {
+      width: 3.8rem;
+      height: 3.8rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      cursor: pointer;
+      transition: transform 0.25s var(--spring), background 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .modal-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 1.6rem;
+      border-radius: 1.8rem;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-row-label {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .modal-row-sub {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .modal-input {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1rem;
+      padding: 0.8rem 1.4rem;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 1.4rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .modal-input:focus {
+      border-color: var(--m2);
+      box-shadow: 0 0 1rem var(--mint-glow);
+    }
+
+    .modal-select {
+      background: #1e221f;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 1rem;
+      padding: 0.8rem 1.4rem;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 1.4rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .modal-primary-btn {
+      padding: 1.2rem 2.4rem;
+      border-radius: 999rem;
+      background: var(--grad);
+      color: var(--text-teal);
+      border: none;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.25s var(--spring), box-shadow 0.3s;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal-primary-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0.8rem 2.4rem var(--mint-glow);
+    }
+
+    /* Segmented switch buttons */
+    .segmented-ctrl {
+      display: flex;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 999rem;
+      padding: 0.3rem;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .segment-btn {
+      padding: 0.5rem 1.4rem;
+      border-radius: 999rem;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1.3rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.25s, color 0.2s;
+    }
+
+    .segment-btn.active {
+      background: #ffffff;
+      color: var(--text-dark);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ==========================================================================
+       8. TOAST NOTIFICATION & ?rec CURSOR
        ========================================================================== */
     #spatial-toast {
       position: fixed;
@@ -1380,7 +1870,7 @@
       transform: translate(-50%, 8rem);
       padding: 1.2rem 2.6rem;
       border-radius: 999rem;
-      background: rgba(30, 32, 28, 0.85);
+      background: rgba(30, 32, 28, 0.88);
       border: 1px solid rgba(255, 255, 255, 0.24);
       backdrop-filter: blur(28px);
       -webkit-backdrop-filter: blur(28px);
@@ -1424,7 +1914,6 @@
       stroke-linejoin: round;
     }
 
-    /* ?rec frosted cursor circle */
     #rec-cursor {
       position: fixed;
       width: 52px;
@@ -1459,7 +1948,7 @@
     }
 
     /* ==========================================================================
-       8. RESPONSIVE DESIGN (<= 900px)
+       9. RESPONSIVE DESIGN (<= 900px)
        ========================================================================== */
     @media (max-width: 900px) {
       html {
@@ -1489,6 +1978,15 @@
         position: relative;
         transform: none !important;
         padding: 2rem 1.6rem 6rem;
+      }
+
+      #spatial-canvas {
+        position: relative;
+        left: 0;
+        top: 0;
+        transform: none !important;
+        width: 100%;
+        height: auto;
       }
 
       #tab-bar {
@@ -1542,7 +2040,6 @@
         filter: none !important;
       }
 
-      /* 2-column mobile layout rules */
       #card-camera {
         grid-column: 1 / -1;
         aspect-ratio: 16 / 9;
@@ -1566,12 +2063,12 @@
 
       #card-small-appliance {
         grid-column: 1;
-        height: 22rem !important;
+        height: 23rem !important;
       }
 
       #card-lights {
         grid-column: 2;
-        height: 22rem !important;
+        height: 23rem !important;
       }
 
       #card-music {
@@ -1579,7 +2076,7 @@
         height: auto !important;
       }
 
-      @media (max-width: 480px) {
+      @media (max-width: 520px) {
         #main-window {
           grid-template-columns: 1fr;
         }
@@ -1615,252 +2112,542 @@
       <div id="room-sun"></div>
       <div id="room-vignette"></div>
       <div id="room-dim"></div>
+      <div id="room-tint"></div>
     </div>
 
     <!-- ======================================================================
          SPATIAL 3D UI LAYER
          ====================================================================== -->
     <div id="ui-layer">
+      <!-- Centered Spatial Canvas: Guarantees Perfect Symmetrical Alignment -->
+      <div id="spatial-canvas">
 
-      <!-- TOP TAB BAR -->
-      <nav id="tab-bar" class="glass intro-hidden">
-        <div class="tab-indicator" id="tab-indicator"></div>
-        <button class="tab-pill" data-room="favorites">
-          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          Favorites
-        </button>
-        <button class="tab-pill active" data-room="living_room">
-          <svg viewBox="0 0 24 24"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"></path><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0z"></path><path d="M4 18v2"></path><path d="M20 18v2"></path></svg>
-          Living room
-        </button>
-        <button class="tab-pill" data-room="kitchen">
-          <svg viewBox="0 0 24 24"><path d="M18 2v20M14 2v6a3 3 0 0 0 3 3v11"></path><path d="M6 2v7a3 3 0 0 0 3 3v8"></path><path d="M9 2v4"></path><path d="M3 2v4"></path></svg>
-          Kitchen
-        </button>
-        <button class="tab-pill" data-room="bathroom">
-          <svg viewBox="0 0 24 24"><path d="M3 12h18M4 12v5a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-5"></path><path d="M6 8a3 3 0 0 1 6 0v4"></path></svg>
-          Bathroom
-        </button>
-        <button class="tab-pill" data-room="bedroom">
-          <svg viewBox="0 0 24 24"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path></svg>
-          Bedroom
-        </button>
-        <button class="tab-add-btn" id="btn-add-tab" title="Add device">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-      </nav>
-
-      <!-- LEFT ICON RAIL -->
-      <aside id="icon-rail" class="glass intro-hidden">
-        <button class="rail-btn" data-panel="home">
-          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          <span class="rail-tooltip">Home</span>
-        </button>
-        <button class="rail-btn active" data-panel="lighting">
-          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
-          <span class="rail-tooltip">Lighting</span>
-        </button>
-        <button class="rail-btn" data-panel="climate">
-          <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
-          <span class="rail-tooltip">Climate</span>
-        </button>
-        <button class="rail-btn" data-panel="security">
-          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-          <span class="rail-tooltip">Security</span>
-        </button>
-        <button class="rail-btn" data-panel="settings">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-          <span class="rail-tooltip">Settings</span>
-        </button>
-      </aside>
-
-      <!-- SPATIAL MAIN WINDOW -->
-      <main id="main-window" class="glass intro-hidden">
-
-        <!-- 6.1 LIVE CAMERA CARD -->
-        <article id="card-camera" class="inner-card card-glass intro-hidden">
-          <div class="cam-feed-box" id="cam-feed-box">
-            <video id="cam-video-el" autoplay muted loop playsinline poster="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005657_e8371ddf-b918-4539-b7c2-07cd5010e4e6.png&w=1920&q=85">
-              <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261118_005751_ccbea518-0364-45d9-8951-be0c8e36bd0a.mp4" type="video/mp4">
-            </video>
-            <img id="cam-img-el" src="" alt="Room CCTV Camera">
-            <div class="cam-scanlines"></div>
-            <div class="cam-gradients"></div>
-            <div class="cam-curtain" id="cam-curtain"></div>
+        <!-- TOP TAB BAR -->
+        <nav id="tab-bar" class="glass intro-hidden">
+          <div class="tab-indicator" id="tab-indicator"></div>
+          <button class="tab-pill" data-room="favorites">
+            <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            Favorites
+          </button>
+          <button class="tab-pill active" data-room="living_room">
+            <svg viewBox="0 0 24 24"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"></path><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0z"></path><path d="M4 18v2"></path><path d="M20 18v2"></path></svg>
+            Living room
+          </button>
+          <button class="tab-pill" data-room="kitchen">
+            <svg viewBox="0 0 24 24"><path d="M18 2v20M14 2v6a3 3 0 0 0 3 3v11"></path><path d="M6 2v7a3 3 0 0 0 3 3v8"></path><path d="M9 2v4"></path><path d="M3 2v4"></path></svg>
+            Kitchen
+          </button>
+          <button class="tab-pill" data-room="bathroom">
+            <svg viewBox="0 0 24 24"><path d="M3 12h18M4 12v5a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-5"></path><path d="M6 8a3 3 0 0 1 6 0v4"></path></svg>
+            Bathroom
+          </button>
+          <button class="tab-pill" data-room="bedroom">
+            <svg viewBox="0 0 24 24"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path></svg>
+            Bedroom
+          </button>
+          <button class="tab-add-btn" id="btn-add-tab" title="Add device or custom scene">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <div class="sync-badge" title="Live sync with Python / IoT backend">
+            <div class="sync-dot"></div>
+            <span>LIVE SYNC</span>
           </div>
-          <div class="cam-top-row">
-            <div class="cam-live-chip">
-              <div class="cam-live-dot"></div>
-              <span>Live</span>
+        </nav>
+
+        <!-- LEFT ICON RAIL -->
+        <aside id="icon-rail" class="glass intro-hidden">
+          <button class="rail-btn" data-panel="home" title="Home Overview">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="rail-tooltip">Home Overview</span>
+          </button>
+          <button class="rail-btn active" data-panel="lighting" title="Lighting Controls">
+            <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
+            <span class="rail-tooltip">Lighting Master</span>
+          </button>
+          <button class="rail-btn" data-panel="climate" title="Climate Manager">
+            <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+            <span class="rail-tooltip">Climate Presets</span>
+          </button>
+          <button class="rail-btn" data-panel="security" title="Security & Away Mode">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span class="rail-tooltip">Security & Away</span>
+          </button>
+          <button class="rail-btn" data-panel="settings" title="Dashboard Settings">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span class="rail-tooltip">System Settings</span>
+          </button>
+        </aside>
+
+        <!-- SPATIAL MAIN WINDOW -->
+        <main id="main-window" class="glass intro-hidden">
+
+          <!-- 6.1 LIVE CAMERA CARD -->
+          <article id="card-camera" class="inner-card card-glass intro-hidden">
+            <div class="cam-feed-box" id="cam-feed-box">
+              <video id="cam-video-el" autoplay muted loop playsinline poster="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005657_e8371ddf-b918-4539-b7c2-07cd5010e4e6.png&w=1920&q=85">
+                <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261118_005751_ccbea518-0364-45d9-8951-be0c8e36bd0a.mp4" type="video/mp4">
+              </video>
+              <img id="cam-img-el" src="" alt="Room CCTV Camera">
+              <div class="cam-scanlines"></div>
+              <div class="cam-gradients"></div>
+              <div class="cam-motion-hud" id="cam-motion-hud">
+                <div class="cam-motion-tag">MOTION TRACKED</div>
+              </div>
+              <div class="cam-curtain" id="cam-curtain"></div>
+              <div class="cam-flash" id="cam-flash"></div>
             </div>
-            <div class="cam-rec-time" id="cam-rec-clock">REC · 09:41:07</div>
-          </div>
-          <div class="cam-bottom-label" id="cam-room-label">Living room / Live camera</div>
-          <div class="cam-expand-hint" title="Expand camera">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-          </div>
-        </article>
-
-        <!-- 6.2 THERMOSTAT DIAL CARD -->
-        <article id="card-thermostat" class="inner-card card-glass intro-hidden">
-          <div class="dial-header">
-            <div class="dial-title-box">
-              <div class="dial-title" id="dial-device-name">Thermostat · 22°</div>
-              <div class="dial-status-chip">
-                <div class="dial-status-dot" id="dial-dot"></div>
-                <span id="dial-status-label">Cooling</span>
+            <div class="cam-top-row">
+              <div class="cam-live-chip">
+                <div class="cam-live-dot"></div>
+                <span>Live</span>
+              </div>
+              <div class="cam-rec-time" id="cam-rec-clock">REC · 09:41:07</div>
+            </div>
+            <div class="cam-bottom-row">
+              <div class="cam-bottom-label" id="cam-room-label">Living room / Live camera</div>
+              <div class="cam-controls-group">
+                <button class="cam-ctrl-btn" id="cam-btn-snapshot" title="Take Instant Camera Snapshot">
+                  <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </button>
+                <button class="cam-ctrl-btn" id="cam-btn-night" title="Toggle IR Night Vision">
+                  <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <button class="cam-ctrl-btn" id="cam-btn-motion" title="Toggle Motion HUD Tracking">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                <button class="cam-ctrl-btn" id="cam-btn-expand" title="Expand to Full Window">
+                  <svg viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                </button>
               </div>
             </div>
-            <button class="dial-gear-btn" title="Thermostat settings">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-          </div>
+          </article>
 
-          <div class="dial-visual-wrap">
-            <svg class="dial-svg" id="dial-svg" viewBox="0 0 260 260">
-              <defs>
-                <linearGradient id="mintGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#e3fbb0" />
-                  <stop offset="45%" stop-color="#8ef0d6" />
-                  <stop offset="100%" stop-color="#3cc4b4" />
-                </linearGradient>
-              </defs>
-              <!-- 270 deg arc from 135 deg to 45 deg (radius 104, length ~490.09) -->
-              <path class="dial-track" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" />
-              <path class="dial-arc-glow" id="dial-arc-glow" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
-              <path class="dial-arc" id="dial-arc" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
-              <!-- Ticks group rendered dynamically via JS -->
-              <g id="dial-ticks"></g>
-              <circle class="dial-knob" id="dial-knob" cx="130" cy="26" r="12" />
-            </svg>
-            <!-- Center Power Button -->
-            <button class="dial-power-btn" id="dial-power-btn" title="Toggle Power">
-              <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
-            </button>
-          </div>
-
-          <div class="dial-bottom-info">
-            <div class="dial-temp-value" id="dial-big-val">22°</div>
-            <div class="dial-sub-target">Target temperature</div>
-          </div>
-        </article>
-
-        <!-- 6.3 SCENE PILL -->
-        <article id="card-scene" class="inner-card card-glass intro-hidden">
-          <div class="scene-left">
-            <div class="scene-icon-circ" id="scene-icon-circ">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            </div>
-            <div class="scene-texts">
-              <div class="scene-title" id="scene-name">Morning</div>
-              <div class="scene-tag">Scene</div>
-            </div>
-          </div>
-          <div class="scene-play-btn" title="Trigger scene">
-            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          </div>
-        </article>
-
-        <!-- 6.4 SMALL APPLIANCE CARD -->
-        <article id="card-small-appliance" class="inner-card card-glass intro-hidden">
-          <div class="small-top-row">
-            <div class="small-icons-group">
-              <div class="small-icon-circ" id="small-app-icon">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>
-              </div>
-              <div class="small-icon-circ">
-                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-              </div>
-            </div>
-            <div class="small-status-text" id="small-status-txt">Docked</div>
-          </div>
-          
-          <div class="small-progress-track" id="small-progress-track">
-            <div class="small-progress-bar" id="small-progress-bar"></div>
-          </div>
-
-          <div class="small-bottom-row">
-            <div class="small-labels">
-              <div class="small-title" id="small-app-title">Robot vacuum</div>
-              <div class="small-subline" id="small-app-sub">Docked</div>
-            </div>
-            <div class="spatial-toggle" id="small-toggle" role="switch" aria-checked="false"></div>
-          </div>
-        </article>
-
-        <!-- 6.5 GRADIENT CARD: CEILING LIGHTS -->
-        <article id="card-lights" class="inner-card card-glass on intro-hidden">
-          <div class="lights-top-row">
-            <div class="lights-bulb-circ">
-              <svg id="lights-bulb-svg" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
-            </div>
-            <div class="lights-status-text" id="lights-status-txt">On</div>
-          </div>
-          <div class="lights-bottom-row">
-            <div class="lights-labels">
-              <div class="lights-title" id="lights-title-txt">Ceiling lights</div>
-              <div class="lights-state" id="lights-subline-txt">On · 72%</div>
-            </div>
-            <div class="spatial-toggle active" id="lights-toggle" role="switch" aria-checked="true"></div>
-          </div>
-        </article>
-
-        <!-- 6.6 BRIGHTNESS SLIDER -->
-        <article id="card-brightness" class="inner-card card-glass intro-hidden">
-          <div class="slider-track-fill" id="slider-fill"></div>
-          <div class="slider-content">
-            <div class="slider-sun-icon" id="slider-sun">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-            </div>
-            <div class="slider-pct" id="slider-val">72%</div>
-          </div>
-        </article>
-
-        <!-- 6.7 MUSIC PLAYER -->
-        <article id="card-music" class="inner-card card-glass intro-hidden">
-          <div class="music-art-wrap">
-            <img class="music-art-img" id="music-art" src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_8b53b6f2-a379-434c-9c37-3766a3c6ae3f.png&w=400&q=85" alt="Album Art">
-          </div>
-          <div class="music-right">
-            <div class="music-top-line">
-              <div class="now-playing-chip" id="now-playing-chip">
-                <span class="music-note-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                </span>
-                <span>Now Playing</span>
-                <div class="equalizer-bars playing" id="eq-bars">
-                  <div class="eq-bar"></div>
-                  <div class="eq-bar"></div>
-                  <div class="eq-bar"></div>
+          <!-- 6.2 THERMOSTAT DIAL CARD -->
+          <article id="card-thermostat" class="inner-card card-glass intro-hidden">
+            <div class="dial-header">
+              <div class="dial-title-box">
+                <div class="dial-title" id="dial-device-name">Thermostat · 22°C</div>
+                <div class="dial-status-chip">
+                  <div class="dial-status-dot" id="dial-dot"></div>
+                  <span id="dial-status-label">Cooling</span>
                 </div>
               </div>
-              <div class="music-time-display" id="music-time">1:12 / 3:24</div>
-            </div>
-
-            <div class="music-titles-box" id="music-titles-box">
-              <div class="music-song-title" id="music-title">Slow Bloom</div>
-              <div class="music-artist-name" id="music-artist">Nami</div>
-            </div>
-
-            <div class="music-seek-bar" id="music-seek-bar">
-              <div class="music-seek-fill" id="music-seek-fill"></div>
-            </div>
-
-            <div class="music-controls-row">
-              <button class="music-btn" id="music-prev" title="Previous Track">
-                <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
-              </button>
-              <button class="music-play-pause-btn" id="music-play-btn" title="Play/Pause">
-                <svg id="music-play-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-              </button>
-              <button class="music-btn" id="music-next" title="Next Track">
-                <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+              <button class="dial-gear-btn" id="dial-gear-btn" title="Open Thermostat Controls">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               </button>
             </div>
+
+            <div class="dial-visual-wrap">
+              <svg class="dial-svg" id="dial-svg" viewBox="0 0 260 260">
+                <defs>
+                  <linearGradient id="mintGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#e3fbb0" />
+                    <stop offset="45%" stop-color="#8ef0d6" />
+                    <stop offset="100%" stop-color="#3cc4b4" />
+                  </linearGradient>
+                  <linearGradient id="warmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffe29f" />
+                    <stop offset="45%" stop-color="#ffa99f" />
+                    <stop offset="100%" stop-color="#ff719a" />
+                  </linearGradient>
+                </defs>
+                <path class="dial-track" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" />
+                <path class="dial-arc-glow" id="dial-arc-glow" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
+                <path class="dial-arc" id="dial-arc" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
+                <g id="dial-ticks"></g>
+                <circle class="dial-knob" id="dial-knob" cx="130" cy="26" r="12" />
+              </svg>
+              <!-- Center Power Button -->
+              <button class="dial-power-btn" id="dial-power-btn" title="Toggle Power">
+                <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+              </button>
+            </div>
+
+            <div class="dial-bottom-info">
+              <div class="dial-temp-value" id="dial-big-val">22°C</div>
+              <div class="dial-sub-target" id="dial-sub-mode-txt">Target temperature · Auto</div>
+            </div>
+          </article>
+
+          <!-- 6.3 SCENE PILL (CLICK TO CYCLE SCENES) -->
+          <article id="card-scene" class="inner-card card-glass intro-hidden" title="Click to trigger scene or cycle modes">
+            <div class="scene-left">
+              <div class="scene-icon-circ" id="scene-icon-circ">
+                <svg id="scene-icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+              </div>
+              <div class="scene-texts">
+                <div class="scene-title" id="scene-name">Morning</div>
+                <div class="scene-tag" id="scene-sub">Click to Activate</div>
+              </div>
+            </div>
+            <div class="scene-play-btn" title="Run Scene">
+              <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+          </article>
+
+          <!-- 6.4 SMALL APPLIANCE CARD -->
+          <article id="card-small-appliance" class="inner-card card-glass intro-hidden">
+            <div class="small-top-row">
+              <div class="small-icons-group">
+                <div class="small-icon-circ" id="small-app-icon" title="Toggle cycle">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>
+                </div>
+                <div class="small-icon-circ" id="small-btn-dock" title="Return to Dock">
+                  <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                </div>
+              </div>
+              <div class="small-status-text" id="small-status-txt">Docked · 98% Bat</div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="small-actions-row">
+              <button class="small-action-pill" id="small-btn-action1">Clean All</button>
+              <button class="small-action-pill" id="small-btn-action2">Spot Clean</button>
+            </div>
+            
+            <div class="small-progress-track" id="small-progress-track">
+              <div class="small-progress-bar" id="small-progress-bar"></div>
+            </div>
+
+            <div class="small-bottom-row">
+              <div class="small-labels">
+                <div class="small-title" id="small-app-title">Robot vacuum</div>
+                <div class="small-subline" id="small-app-sub">Standby at base</div>
+              </div>
+              <div class="spatial-toggle" id="small-toggle" role="switch" aria-checked="false" title="Power switch"></div>
+            </div>
+          </article>
+
+          <!-- 6.5 GRADIENT CARD: CEILING LIGHTS -->
+          <article id="card-lights" class="inner-card card-glass on intro-hidden">
+            <div class="lights-top-row">
+              <div class="lights-bulb-circ" id="lights-bulb-circ" title="Toggle Light">
+                <svg id="lights-bulb-svg" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
+              </div>
+              <div class="lights-status-text" id="lights-status-txt">On</div>
+            </div>
+
+            <!-- Color Temp Chips -->
+            <div class="lights-temps-row">
+              <button class="temp-chip" data-temp="warm" title="2700K Warm Glow">Warm</button>
+              <button class="temp-chip" data-temp="neutral" title="4000K Neutral White">Neutral</button>
+              <button class="temp-chip" data-temp="daylight" title="6500K Daylight">Daylight</button>
+              <button class="temp-chip active" data-temp="mint" title="Mint Aurora">Mint</button>
+            </div>
+
+            <div class="lights-bottom-row">
+              <div class="lights-labels">
+                <div class="lights-title" id="lights-title-txt">Ceiling lights</div>
+                <div class="lights-state" id="lights-subline-txt">On · 72%</div>
+              </div>
+              <div class="spatial-toggle active" id="lights-toggle" role="switch" aria-checked="true" title="Light power switch"></div>
+            </div>
+          </article>
+
+          <!-- 6.6 BRIGHTNESS SLIDER -->
+          <article id="card-brightness" class="inner-card card-glass intro-hidden" title="Drag or click to adjust brightness">
+            <div class="slider-track-fill" id="slider-fill"></div>
+            <div class="slider-content">
+              <div class="slider-left-ctrls">
+                <div class="slider-sun-icon" id="slider-sun">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </div>
+                <button class="slider-step-btn" id="slider-btn-minus" title="Dim by 5%">−</button>
+                <button class="slider-step-btn" id="slider-btn-plus" title="Brighten by 5%">+</button>
+              </div>
+              <div class="slider-pct" id="slider-val">72%</div>
+            </div>
+          </article>
+
+          <!-- 6.7 MUSIC PLAYER -->
+          <article id="card-music" class="inner-card card-glass intro-hidden">
+            <div class="music-art-wrap">
+              <img class="music-art-img" id="music-art" src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_8b53b6f2-a379-434c-9c37-3766a3c6ae3f.png&w=400&q=85" alt="Album Art">
+            </div>
+            <div class="music-right">
+              <div class="music-top-line">
+                <div class="now-playing-chip" id="now-playing-chip">
+                  <span class="music-note-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                  </span>
+                  <span>Now Playing</span>
+                  <div class="equalizer-bars playing" id="eq-bars">
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                  </div>
+                </div>
+                <div class="music-time-display" id="music-time">1:12 / 3:24</div>
+              </div>
+
+              <div class="music-titles-box" id="music-titles-box">
+                <div class="music-song-title" id="music-title">Slow Bloom</div>
+                <div class="music-artist-name" id="music-artist">Nami</div>
+              </div>
+
+              <div class="music-seek-bar" id="music-seek-bar" title="Click to seek">
+                <div class="music-seek-fill" id="music-seek-fill"></div>
+              </div>
+
+              <div class="music-controls-row">
+                <div class="music-main-btns">
+                  <button class="music-btn" id="music-btn-shuffle" title="Toggle Shuffle">
+                    <svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                  </button>
+                  <button class="music-btn" id="music-prev" title="Previous Track">
+                    <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                  </button>
+                  <button class="music-play-pause-btn" id="music-play-btn" title="Play/Pause Synthesized Audio">
+                    <svg id="music-play-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                  </button>
+                  <button class="music-btn" id="music-next" title="Next Track">
+                    <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                  </button>
+                  <button class="music-btn" id="music-btn-repeat" title="Toggle Repeat">
+                    <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                  </button>
+                </div>
+
+                <div class="music-vol-wrap">
+                  <button class="music-vol-btn" id="music-btn-mute" title="Mute/Unmute">
+                    <svg id="music-vol-icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                  </button>
+                  <input type="range" class="music-vol-slider" id="music-vol-slider" min="0" max="100" value="70" title="Adjust Volume">
+                </div>
+              </div>
+            </div>
+          </article>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 1: SYSTEM SETTINGS MODAL
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-settings">
+    <div class="spatial-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">System Settings</h3>
+        <button class="modal-close-btn" data-close="modal-settings">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Temperature Unit</div>
+            <div class="modal-row-sub">Switch between Celsius and Fahrenheit</div>
           </div>
-        </article>
+          <div class="segmented-ctrl" id="seg-temp-unit">
+            <button class="segment-btn active" data-unit="C">°C</button>
+            <button class="segment-btn" data-unit="F">°F</button>
+          </div>
+        </div>
 
-      </main>
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Audio & Haptic Feedback</div>
+            <div class="modal-row-sub">Synthesized Web Audio sound clicks on tap</div>
+          </div>
+          <div class="spatial-toggle active" id="toggle-sound-effects" role="switch"></div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Ambient Lo-Fi Synth Engine</div>
+            <div class="modal-row-sub">Synthesize generative chill chords on music play</div>
+          </div>
+          <div class="spatial-toggle active" id="toggle-synth-audio" role="switch"></div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Simulate Motion Events</div>
+            <div class="modal-row-sub">Auto-triggers PIR sensor simulation every 40s</div>
+          </div>
+          <div class="spatial-toggle active" id="toggle-motion-sim" role="switch"></div>
+        </div>
+
+        <button class="modal-primary-btn" id="btn-save-settings">Save & Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: THERMOSTAT ADVANCED CONTROLS MODAL
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-thermostat">
+    <div class="spatial-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Thermostat & Climate Controls</h3>
+        <button class="modal-close-btn" data-close="modal-thermostat">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Operating Mode</div>
+            <div class="modal-row-sub">Select active HVAC profile</div>
+          </div>
+          <div class="segmented-ctrl" id="seg-hvac-mode">
+            <button class="segment-btn active" data-mode="Auto">Auto</button>
+            <button class="segment-btn" data-mode="Cool">Cool</button>
+            <button class="segment-btn" data-mode="Heat">Heat</button>
+            <button class="segment-btn" data-mode="Eco">Eco</button>
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Hysteresis Deadband</div>
+            <div class="modal-row-sub">Prevents relay chatter around target temp</div>
+          </div>
+          <select class="modal-select" id="select-hysteresis">
+            <option value="1.0">1.0° (Tighter control)</option>
+            <option value="2.0" selected>2.0° (Recommended / Default)</option>
+            <option value="3.0">3.0° (Energy saving)</option>
+          </select>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Fan Speed</div>
+            <div class="modal-row-sub">Smart DC fan speed level</div>
+          </div>
+          <div class="segmented-ctrl" id="seg-fan-speed">
+            <button class="segment-btn active" data-speed="Auto">Auto</button>
+            <button class="segment-btn" data-speed="Low">Low</button>
+            <button class="segment-btn" data-speed="Med">Med</button>
+            <button class="segment-btn" data-speed="High">High</button>
+          </div>
+        </div>
+
+        <button class="modal-primary-btn" id="btn-apply-thermostat">Apply Climate Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 3: ADD DEVICE / AUTOMATION MODAL
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-add-device">
+    <div class="spatial-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Smart Appliance / Tile</h3>
+        <button class="modal-close-btn" data-close="modal-add-device">✕</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <div class="modal-row-label" style="margin-bottom: 0.8rem;">Appliance Name</div>
+          <input type="text" class="modal-input" id="input-new-dev-name" placeholder="e.g. Balcony String Lights" value="Dining Table Chandelier">
+        </div>
+
+        <div>
+          <div class="modal-row-label" style="margin-bottom: 0.8rem;">Device Category</div>
+          <select class="modal-select" id="select-new-dev-type" style="width: 100%;">
+            <option value="light">💡 Smart Lighting / LED</option>
+            <option value="fan">🌀 Ventilation / DC Fan</option>
+            <option value="socket">🔌 Smart Power Plug</option>
+            <option value="sensor">🌡️ Climate / PIR Sensor</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="modal-row-label" style="margin-bottom: 0.8rem;">Target Room</div>
+          <select class="modal-select" id="select-new-dev-room" style="width: 100%;">
+            <option value="living_room">Living Room</option>
+            <option value="kitchen">Kitchen</option>
+            <option value="bedroom">Bedroom</option>
+            <option value="bathroom">Bathroom</option>
+          </select>
+        </div>
+
+        <button class="modal-primary-btn" id="btn-submit-add-device">Pair & Register Device</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 4: SECURITY & AWAY SHIELD MODAL
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-security">
+    <div class="spatial-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Security & Away Shield</h3>
+        <button class="modal-close-btn" data-close="modal-security">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">System Security State</div>
+            <div class="modal-row-sub" id="sec-status-detail">All entry points secure · Motion disarmed</div>
+          </div>
+          <div class="segmented-ctrl" id="seg-sec-state">
+            <button class="segment-btn active" data-sec="disarmed">Disarmed</button>
+            <button class="segment-btn" data-sec="stay">Stay</button>
+            <button class="segment-btn" data-sec="away">Away</button>
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Simulate Panic Flash</div>
+            <div class="modal-row-sub">Strobes living room lights for 3 seconds</div>
+          </div>
+          <button class="small-action-pill" id="btn-panic-test" style="flex: none; padding: 0.8rem 1.6rem;">Test Strobe</button>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Door & Window Sensors</div>
+            <div class="modal-row-sub">4 / 4 Contact sensors reporting secure</div>
+          </div>
+          <span style="color: var(--m2); font-weight: 700;">OK</span>
+        </div>
+
+        <button class="modal-primary-btn" id="btn-save-security">Update Security Guard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 5: LIGHTING MASTER DRAWER
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-lighting">
+    <div class="spatial-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Lighting Master Controller</h3>
+        <button class="modal-close-btn" data-close="modal-lighting">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Master Household Lighting</div>
+            <div class="modal-row-sub">Turn all lights across the house ON or OFF</div>
+          </div>
+          <div style="display: flex; gap: 0.8rem;">
+            <button class="small-action-pill" id="btn-all-lights-on">All ON</button>
+            <button class="small-action-pill" id="btn-all-lights-off">All OFF</button>
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Living Room Light</div>
+            <div class="modal-row-sub">Relay Channel 1 (GPIO 18)</div>
+          </div>
+          <div class="spatial-toggle active" id="modal-toggle-lr"></div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Bedroom Light</div>
+            <div class="modal-row-sub">GPIO 21 LED Module</div>
+          </div>
+          <div class="spatial-toggle" id="modal-toggle-br"></div>
+        </div>
+
+        <button class="modal-primary-btn" id="btn-close-lighting-modal">Done</button>
+      </div>
     </div>
   </div>
 
@@ -1885,7 +2672,7 @@
       'use strict';
 
       // ------------------------------------------------------------------------
-      // DATA DICTIONARIES
+      // 1. DATA DICTIONARIES & SOUND ENGINE
       // ------------------------------------------------------------------------
       const ROOM_DATA = {
         living_room: {
@@ -1895,13 +2682,12 @@
           dialVal: 22,
           dialMin: 16,
           dialMax: 30,
-          dialUnit: "°",
           dialStatus: "Cooling",
           dialDotColor: "mint",
           sceneName: "Morning",
           smallName: "Robot vacuum",
-          smallStatus: "Docked",
-          smallSub: "Docked",
+          smallStatus: "Docked · 98% Bat",
+          smallSub: "Standby at base",
           smallIcon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>`,
           lightsName: "Ceiling lights"
         },
@@ -1913,13 +2699,12 @@
           dialVal: 180,
           dialMin: 50,
           dialMax: 250,
-          dialUnit: "°",
           dialStatus: "Preheating",
           dialDotColor: "orange",
           sceneName: "Breakfast",
           smallName: "Dishwasher",
           smallStatus: "Idle",
-          smallSub: "Idle",
+          smallSub: "Cycle ready",
           smallIcon: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="12" cy="12" r="4"></circle><line x1="8" y1="7" x2="8.01" y2="7"></line></svg>`,
           lightsName: "Pendant lights"
         },
@@ -1931,13 +2716,12 @@
           dialVal: 26,
           dialMin: 18,
           dialMax: 34,
-          dialUnit: "°",
           dialStatus: "Warming",
           dialDotColor: "mint",
           sceneName: "Spa",
           smallName: "Towel warmer",
           smallStatus: "Off",
-          smallSub: "Off",
+          smallSub: "Standby",
           smallIcon: `<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M4 10h16M4 15h16"></path></svg>`,
           lightsName: "Mirror light"
         },
@@ -1949,13 +2733,12 @@
           dialVal: 19,
           dialMin: 15,
           dialMax: 26,
-          dialUnit: "°",
           dialStatus: "Cooling",
           dialDotColor: "mint",
           sceneName: "Wind down",
           smallName: "Air purifier",
-          smallStatus: "Standby",
-          smallSub: "Standby",
+          smallStatus: "Standby · Clean",
+          smallSub: "AQI: 14 (Good)",
           smallIcon: `<svg viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>`,
           lightsName: "Bedside lamps"
         },
@@ -1966,38 +2749,198 @@
           dialVal: 22,
           dialMin: 16,
           dialMax: 30,
-          dialUnit: "°",
           dialStatus: "Cooling",
           dialDotColor: "mint",
           sceneName: "Morning",
           smallName: "Robot vacuum",
-          smallStatus: "Docked",
-          smallSub: "Docked",
+          smallStatus: "Docked · 98% Bat",
+          smallSub: "Standby at base",
           smallIcon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>`,
           lightsName: "Ceiling lights"
         }
       };
+
+      const SCENES_LIST = [
+        {
+          name: "Morning",
+          sub: "Sunrise Routine",
+          brightness: 86,
+          temp: 22,
+          music: true,
+          colorTemp: "warm",
+          toast: "Morning scene · lights 86%, 22°C, music on"
+        },
+        {
+          name: "Movie Night",
+          sub: "Cinema Ambient",
+          brightness: 18,
+          temp: 20,
+          music: false,
+          colorTemp: "mint",
+          toast: "Movie Night · lights dimmed to 18%, room darkened"
+        },
+        {
+          name: "Focus / Work",
+          sub: "Daylight Concentrate",
+          brightness: 100,
+          temp: 21,
+          music: true,
+          colorTemp: "daylight",
+          toast: "Focus mode · 100% daylight, ambient lo-fi synth"
+        },
+        {
+          name: "Eco Sleep",
+          sub: "Night Security Mode",
+          brightness: 0,
+          temp: 19,
+          music: false,
+          colorTemp: "warm",
+          toast: "Eco Sleep · all lights extinguished, night mode armed"
+        }
+      ];
 
       const PLAYLIST = [
         {
           title: "Slow Bloom",
           artist: "Nami",
           art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_8b53b6f2-a379-434c-9c37-3766a3c6ae3f.png&w=400&q=85",
-          duration: 204 // 3:24
+          duration: 204
         },
         {
           title: "Sea Glass",
           artist: "Oda Marin",
           art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_bd9be7e9-7cc8-4336-9688-ba74f5a13e75.png&w=400&q=85",
-          duration: 188 // 3:08
+          duration: 188
         },
         {
           title: "Fern Light",
           artist: "Juniper",
           art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_60c08159-38f9-4ed3-a13d-e9c65cee4f7b.png&w=400&q=85",
-          duration: 226 // 3:46
+          duration: 226
         }
       ];
+
+      // ------------------------------------------------------------------------
+      // WEB AUDIO SYNTHESIZER ENGINE (GENUINE SOUND FEEDBACK & LO-FI AUDIO)
+      // ------------------------------------------------------------------------
+      let audioCtx = null;
+      let synthGainNode = null;
+      let synthOscillators = [];
+      let soundEffectsEnabled = true;
+      let synthAudioEnabled = true;
+
+      function initAudioContext() {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            audioCtx = new AudioContext();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }
+
+      function playUiClickSound(freq = 600, duration = 0.04) {
+        if (!soundEffectsEnabled) return;
+        try {
+          initAudioContext();
+          if (!audioCtx) return;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + duration);
+          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+      }
+
+      function playShutterSound() {
+        if (!soundEffectsEnabled) return;
+        try {
+          initAudioContext();
+          if (!audioCtx) return;
+          const now = audioCtx.currentTime;
+          const osc1 = audioCtx.createOscillator();
+          const gain1 = audioCtx.createGain();
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(1200, now);
+          osc1.frequency.exponentialRampToValueAtTime(400, now + 0.06);
+          gain1.gain.setValueAtTime(0.12, now);
+          gain1.gain.linearRampToValueAtTime(0.001, now + 0.06);
+          osc1.connect(gain1);
+          gain1.connect(audioCtx.destination);
+          osc1.start(now);
+          osc1.stop(now + 0.06);
+        } catch(e) {}
+      }
+
+      // Lo-fi chord synthesizer for relaxing background audio
+      const CHORD_PROGRESSIONS = [
+        [261.63, 329.63, 392.00, 493.88], // Cmaj7
+        [220.00, 261.63, 329.63, 392.00], // Am7
+        [174.61, 220.00, 261.63, 329.63], // Fmaj7
+        [196.00, 246.94, 293.66, 349.23]  // G7
+      ];
+      let chordIndex = 0;
+      let chordTimer = null;
+
+      function startLoFiSynth() {
+        if (!synthAudioEnabled) return;
+        try {
+          initAudioContext();
+          if (!audioCtx) return;
+          stopLoFiSynth();
+
+          synthGainNode = audioCtx.createGain();
+          synthGainNode.gain.setValueAtTime(0.035 * (musicVolume / 100), audioCtx.currentTime);
+          synthGainNode.connect(audioCtx.destination);
+
+          function playNextChord() {
+            if (!isPlaying || !synthAudioEnabled) return;
+            const chord = CHORD_PROGRESSIONS[chordIndex % CHORD_PROGRESSIONS.length];
+            chordIndex++;
+
+            // Clean previous chord oscillators
+            synthOscillators.forEach(o => {
+              try { o.stop(); o.disconnect(); } catch(e){}
+            });
+            synthOscillators = [];
+
+            chord.forEach(freq => {
+              const osc = audioCtx.createOscillator();
+              const noteGain = audioCtx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+              noteGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+              noteGain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 1.2);
+              noteGain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 4.8);
+              osc.connect(noteGain);
+              noteGain.connect(synthGainNode);
+              osc.start(audioCtx.currentTime);
+              osc.stop(audioCtx.currentTime + 5.0);
+              synthOscillators.push(osc);
+            });
+          }
+
+          playNextChord();
+          chordTimer = setInterval(playNextChord, 4500);
+        } catch (e) {}
+      }
+
+      function stopLoFiSynth() {
+        if (chordTimer) clearInterval(chordTimer);
+        chordTimer = null;
+        synthOscillators.forEach(o => {
+          try { o.stop(); o.disconnect(); } catch(e){}
+        });
+        synthOscillators = [];
+      }
 
       // ------------------------------------------------------------------------
       // GLOBAL STATE
@@ -2005,23 +2948,32 @@
       let currentRoomKey = "living_room";
       let brightness = 72;
       let lightsOn = true;
+      let currentColorTemp = "mint";
+      let tempUnit = "C"; // C or F
       let dialOn = true;
       let currentDialVal = 22;
       let targetDialVal = 22;
       let dialDragging = false;
       let dialAnimFrame = null;
-      let dialPointerId = null;
 
+      let currentSceneIdx = 0;
       let vacuumActive = false;
       let vacuumProgress = 0;
       let vacuumInterval = null;
 
       let currentTrackIdx = 0;
       let isPlaying = true;
-      let trackCurrentTime = 72; // 1:12
+      let trackCurrentTime = 72;
       let musicTicker = null;
+      let musicVolume = 70;
+      let isMuted = false;
+      let isShuffled = false;
+      let isRepeat = false;
 
       let toastTimer = null;
+      let nightVisionActive = false;
+      let motionHudActive = false;
+      let motionSimTimer = null;
 
       // Parallax state
       let mouseX = 0, mouseY = 0;
@@ -2033,7 +2985,9 @@
       const room = document.getElementById('room');
       const roomDim = document.getElementById('room-dim');
       const roomSun = document.getElementById('room-sun');
+      const roomTint = document.getElementById('room-tint');
       const uiLayer = document.getElementById('ui-layer');
+      const spatialCanvas = document.getElementById('spatial-canvas');
       const tabBar = document.getElementById('tab-bar');
       const tabIndicator = document.getElementById('tab-indicator');
       const iconRail = document.getElementById('icon-rail');
@@ -2046,8 +3000,14 @@
       const camImgEl = document.getElementById('cam-img-el');
       const camFeedBox = document.getElementById('cam-feed-box');
       const camCurtain = document.getElementById('cam-curtain');
+      const camFlash = document.getElementById('cam-flash');
       const camRecClock = document.getElementById('cam-rec-clock');
       const camRoomLabel = document.getElementById('cam-room-label');
+      const camMotionHud = document.getElementById('cam-motion-hud');
+      const camBtnSnapshot = document.getElementById('cam-btn-snapshot');
+      const camBtnNight = document.getElementById('cam-btn-night');
+      const camBtnMotion = document.getElementById('cam-btn-motion');
+      const camBtnExpand = document.getElementById('cam-btn-expand');
 
       // Thermostat elements
       const cardThermostat = document.getElementById('card-thermostat');
@@ -2061,11 +3021,14 @@
       const dialKnob = document.getElementById('dial-knob');
       const dialPowerBtn = document.getElementById('dial-power-btn');
       const dialBigVal = document.getElementById('dial-big-val');
+      const dialGearBtn = document.getElementById('dial-gear-btn');
+      const dialSubModeTxt = document.getElementById('dial-sub-mode-txt');
 
       // Scene elements
       const cardScene = document.getElementById('card-scene');
       const sceneIconCirc = document.getElementById('scene-icon-circ');
       const sceneName = document.getElementById('scene-name');
+      const sceneSub = document.getElementById('scene-sub');
 
       // Small appliance elements
       const cardSmallApp = document.getElementById('card-small-appliance');
@@ -2076,25 +3039,31 @@
       const smallToggle = document.getElementById('small-toggle');
       const smallProgressTrack = document.getElementById('small-progress-track');
       const smallProgressBar = document.getElementById('small-progress-bar');
+      const smallBtnAction1 = document.getElementById('small-btn-action1');
+      const smallBtnAction2 = document.getElementById('small-btn-action2');
+      const smallBtnDock = document.getElementById('small-btn-dock');
 
       // Lights elements
       const cardLights = document.getElementById('card-lights');
       const lightsBulbSvg = document.getElementById('lights-bulb-svg');
+      const lightsBulbCirc = document.getElementById('lights-bulb-circ');
       const lightsStatusTxt = document.getElementById('lights-status-txt');
       const lightsTitleTxt = document.getElementById('lights-title-txt');
       const lightsSublineTxt = document.getElementById('lights-subline-txt');
       const lightsToggle = document.getElementById('lights-toggle');
+      const tempChips = document.querySelectorAll('.temp-chip');
 
       // Brightness elements
       const cardBrightness = document.getElementById('card-brightness');
       const sliderFill = document.getElementById('slider-fill');
       const sliderSun = document.getElementById('slider-sun');
       const sliderVal = document.getElementById('slider-val');
+      const sliderBtnMinus = document.getElementById('slider-btn-minus');
+      const sliderBtnPlus = document.getElementById('slider-btn-plus');
 
       // Music elements
       const cardMusic = document.getElementById('card-music');
       const musicArt = document.getElementById('music-art');
-      const nowPlayingChip = document.getElementById('now-playing-chip');
       const eqBars = document.getElementById('eq-bars');
       const musicTime = document.getElementById('music-time');
       const musicTitlesBox = document.getElementById('music-titles-box');
@@ -2106,6 +3075,18 @@
       const musicPlayBtn = document.getElementById('music-play-btn');
       const musicPlayIcon = document.getElementById('music-play-icon');
       const musicNextBtn = document.getElementById('music-next');
+      const musicBtnShuffle = document.getElementById('music-btn-shuffle');
+      const musicBtnRepeat = document.getElementById('music-btn-repeat');
+      const musicBtnMute = document.getElementById('music-btn-mute');
+      const musicVolIcon = document.getElementById('music-vol-icon');
+      const musicVolSlider = document.getElementById('music-vol-slider');
+
+      // Modals
+      const modalSettings = document.getElementById('modal-settings');
+      const modalThermostat = document.getElementById('modal-thermostat');
+      const modalAddDevice = document.getElementById('modal-add-device');
+      const modalSecurity = document.getElementById('modal-security');
+      const modalLighting = document.getElementById('modal-lighting');
 
       // Toast & rec
       const spatialToast = document.getElementById('spatial-toast');
@@ -2113,7 +3094,7 @@
       const recCursor = document.getElementById('rec-cursor');
 
       // ------------------------------------------------------------------------
-      // 1. TOAST NOTIFICATION UTILITY
+      // 2. TOAST NOTIFICATIONS & LIVE BACKEND API SYNC
       // ------------------------------------------------------------------------
       function showToast(message) {
         toastText.textContent = message;
@@ -2124,8 +3105,18 @@
         }, 2400);
       }
 
+      function syncWithBackend(action, data = {}) {
+        try {
+          fetch('/api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, data, timestamp: Date.now() })
+          }).catch(() => {});
+        } catch(e) {}
+      }
+
       // ------------------------------------------------------------------------
-      // 2. REC CLOCK
+      // 3. REC CLOCK
       // ------------------------------------------------------------------------
       function updateRecClock() {
         const d = new Date();
@@ -2138,7 +3129,7 @@
       updateRecClock();
 
       // ------------------------------------------------------------------------
-      // 3. TAB BAR INDICATOR & ROOM SWITCHING
+      // 4. TAB BAR & ROOM SWITCHING
       // ------------------------------------------------------------------------
       function updateTabIndicator(activeTabEl) {
         if (!activeTabEl) return;
@@ -2150,8 +3141,16 @@
         tabIndicator.style.width = `${width}px`;
       }
 
+      function formatTemp(valInC) {
+        if (tempUnit === "F") {
+          return `${Math.round((valInC * 9/5) + 32)}°F`;
+        }
+        return `${Math.round(valInC)}°C`;
+      }
+
       function switchRoom(roomKey) {
         if (!ROOM_DATA[roomKey]) return;
+        playUiClickSound(750);
         currentRoomKey = roomKey;
         const rData = ROOM_DATA[roomKey];
 
@@ -2177,7 +3176,6 @@
             camFeedBox.classList.add('kenburns');
           }
           camRoomLabel.textContent = `${rData.name} / Live camera`;
-
           camCurtain.classList.remove('wiping-in');
           camCurtain.classList.add('wiping-out');
         }, 450);
@@ -2187,7 +3185,7 @@
         setTimeout(() => musicTitlesBox.classList.remove('roll'), 350);
 
         // 4. Update data on cards
-        dialDeviceName.textContent = `${rData.dialName} · ${rData.dialVal}${rData.dialUnit}`;
+        dialDeviceName.textContent = `${rData.dialName} · ${formatTemp(rData.dialVal)}`;
         dialStatusLabel.textContent = rData.dialStatus;
         dialDot.className = `dial-status-dot ${rData.dialDotColor}`;
         sceneName.textContent = rData.sceneName;
@@ -2197,7 +3195,7 @@
         smallStatusTxt.textContent = rData.smallStatus;
         smallAppIcon.innerHTML = rData.smallIcon;
 
-        // Reset vacuum/small appliance progress if switched
+        // Reset appliance progress
         if (vacuumInterval) clearInterval(vacuumInterval);
         vacuumActive = false;
         smallToggle.classList.remove('active');
@@ -2213,6 +3211,7 @@
         animateDialTo(targetDialVal);
 
         showToast(`${rData.name} selected`);
+        syncWithBackend("switch_room", { room: currentRoomKey });
       }
 
       const tabs = tabBar.querySelectorAll('.tab-pill');
@@ -2225,33 +3224,106 @@
         });
       });
 
-      // '+' button rotates 90deg on hover (CSS handled) and pops toast on click
+      // '+' button opens Add Device Modal
       document.getElementById('btn-add-tab').addEventListener('click', () => {
-        showToast("New automation or device tile added");
+        playUiClickSound(800);
+        modalAddDevice.classList.add('show');
       });
 
       // ------------------------------------------------------------------------
-      // 4. ICON RAIL INTERACTION
+      // 5. LEFT ICON RAIL INTERACTIVE PANELS
       // ------------------------------------------------------------------------
       const railButtons = iconRail.querySelectorAll('.rail-btn');
       railButtons.forEach(btn => {
         btn.addEventListener('click', () => {
+          playUiClickSound(650);
           railButtons.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           const panelName = btn.dataset.panel;
-          showToast(`${panelName.charAt(0).toUpperCase() + panelName.slice(1)} view`);
+
+          if (panelName === "home") {
+            cardCamera.classList.remove('expanded');
+            switchRoom("living_room");
+            const lrTab = tabBar.querySelector('[data-room="living_room"]');
+            if (lrTab) {
+              tabs.forEach(t => t.classList.remove('active'));
+              lrTab.classList.add('active');
+              updateTabIndicator(lrTab);
+            }
+          } else if (panelName === "lighting") {
+            modalLighting.classList.add('show');
+          } else if (panelName === "climate") {
+            modalThermostat.classList.add('show');
+          } else if (panelName === "security") {
+            modalSecurity.classList.add('show');
+          } else if (panelName === "settings") {
+            modalSettings.classList.add('show');
+          }
+        });
+      });
+
+      // Modal close handlers
+      document.querySelectorAll('.modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playUiClickSound(500);
+          const modalId = btn.dataset.close;
+          const target = document.getElementById(modalId);
+          if (target) target.classList.remove('show');
+        });
+      });
+
+      document.querySelectorAll('.spatial-modal-backdrop').forEach(backdrop => {
+        backdrop.addEventListener('click', (e) => {
+          if (e.target === backdrop) {
+            playUiClickSound(500);
+            backdrop.classList.remove('show');
+          }
         });
       });
 
       // ------------------------------------------------------------------------
-      // 5. CAMERA EXPAND / DOCK TOGGLE
+      // 6. LIVE CAMERA CARD CONTROLS (EXPAND, SNAPSHOT, NIGHT VISION, HUD)
       // ------------------------------------------------------------------------
-      cardCamera.addEventListener('click', (e) => {
+      camBtnExpand.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(800);
         cardCamera.classList.toggle('expanded');
+        showToast(cardCamera.classList.contains('expanded') ? "Camera expanded to full-window" : "Camera docked");
+      });
+
+      // Snapshot capture with flash effect and real image download simulation
+      camBtnSnapshot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playShutterSound();
+        camFlash.classList.add('flashing');
+        setTimeout(() => camFlash.classList.remove('flashing'), 180);
+
+        showToast("Snapshot saved to gallery (1920x1080)");
+        syncWithBackend("camera_snapshot", { room: currentRoomKey });
+      });
+
+      // Night vision toggle
+      camBtnNight.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(700);
+        nightVisionActive = !nightVisionActive;
+        camBtnNight.classList.toggle('active', nightVisionActive);
+        camFeedBox.classList.toggle('night-vision', nightVisionActive);
+        showToast(nightVisionActive ? "Night Vision IR Mode ACTIVE" : "Normal Daylight Video Mode");
+      });
+
+      // Motion HUD toggle
+      camBtnMotion.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(700);
+        motionHudActive = !motionHudActive;
+        camBtnMotion.classList.toggle('active', motionHudActive);
+        camMotionHud.classList.toggle('active', motionHudActive);
+        showToast(motionHudActive ? "Motion Radar HUD Armed" : "Motion Radar HUD Standby");
       });
 
       // ------------------------------------------------------------------------
-      // 6. THERMOSTAT DIAL (270 DEG SWEEP & TICKS)
+      // 7. THERMOSTAT DIAL (270 DEG SWEEP & INTERACTION)
       // ------------------------------------------------------------------------
       const TOTAL_ARC_LENGTH = 490.09;
       const RADIUS = 104;
@@ -2259,12 +3331,10 @@
       const CENTER_Y = 130;
       const NUM_TICKS = 31;
 
-      // Generate 31 ticks inside the SVG dial
       function buildDialTicks() {
         dialTicksGroup.innerHTML = '';
         for (let i = 0; i < NUM_TICKS; i++) {
           const frac = i / (NUM_TICKS - 1);
-          // Angle from 135 deg to 405 deg (45 deg)
           const angleDeg = 135 + frac * 270;
           const rad = (angleDeg * Math.PI) / 180;
           const isMajor = (i % 5 === 0);
@@ -2296,12 +3366,27 @@
         const max = rData.dialMax;
         const frac = Math.max(0, Math.min(1, (val - min) / (max - min)));
 
-        // Offset: when frac = 0, offset = TOTAL_ARC_LENGTH; when frac = 1, offset = 0
         const offset = TOTAL_ARC_LENGTH * (1 - frac);
         dialArc.style.strokeDashoffset = offset;
         dialArcGlow.style.strokeDashoffset = offset;
 
-        // Knob position
+        // Dynamic Glow & Gradient based on heating vs cooling
+        const ambientRef = (currentRoomKey === "kitchen") ? 180 : 21.5;
+        if (val > ambientRef + 0.5) {
+          dialArc.setAttribute('stroke', 'url(#warmGrad)');
+          dialArcGlow.setAttribute('stroke', 'url(#warmGrad)');
+          dialDot.className = "dial-status-dot orange";
+          dialStatusLabel.textContent = (currentRoomKey === "kitchen") ? "Preheating" : "Heating";
+        } else if (val < ambientRef - 0.5) {
+          dialArc.setAttribute('stroke', 'url(#mintGrad)');
+          dialArcGlow.setAttribute('stroke', 'url(#mintGrad)');
+          dialDot.className = "dial-status-dot mint";
+          dialStatusLabel.textContent = "Cooling";
+        } else {
+          dialDot.className = "dial-status-dot mint";
+          dialStatusLabel.textContent = "Comfort (Idle)";
+        }
+
         const angleDeg = 135 + frac * 270;
         const rad = (angleDeg * Math.PI) / 180;
         const kx = CENTER_X + RADIUS * Math.cos(rad);
@@ -2309,7 +3394,6 @@
         dialKnob.setAttribute('cx', kx.toFixed(2));
         dialKnob.setAttribute('cy', ky.toFixed(2));
 
-        // Update tick lights
         const tickThreshold = frac * (NUM_TICKS - 1);
         const ticks = dialTicksGroup.querySelectorAll('line');
         ticks.forEach((t, idx) => {
@@ -2321,22 +3405,20 @@
         });
 
         if (updateText) {
-          const displayVal = Math.round(val);
-          dialBigVal.textContent = `${displayVal}${rData.dialUnit}`;
-          dialDeviceName.textContent = `${rData.dialName} · ${displayVal}${rData.dialUnit}`;
+          dialBigVal.textContent = formatTemp(val);
+          dialDeviceName.textContent = `${rData.dialName} · ${formatTemp(val)}`;
         }
       }
 
       function animateDialTo(targetVal) {
         if (dialAnimFrame) cancelAnimationFrame(dialAnimFrame);
         const startVal = currentDialVal;
-        const duration = 700; // ms
+        const duration = 700;
         const startTime = performance.now();
 
         function step(now) {
           const elapsed = now - startTime;
           const progress = Math.min(1, elapsed / duration);
-          // Ease out cubic
           const easeProgress = 1 - Math.pow(1 - progress, 3);
           currentDialVal = startVal + (targetVal - startVal) * easeProgress;
           updateDialUI(currentDialVal, true);
@@ -2357,20 +3439,15 @@
         const dx = e.clientX - cx;
         const dy = e.clientY - cy;
 
-        // Angle in degrees from center (0 deg is East, 90 is South)
         let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-        // Normalize angle to 0..360
         if (angle < 0) angle += 360;
 
-        // Sweep goes from 135 deg through 270 (top), 0, up to 45 deg
-        // The bottom gap is between 45 deg and 135 deg
         let frac;
         if (angle >= 135) {
           frac = (angle - 135) / 270;
         } else if (angle <= 45) {
           frac = (angle + 360 - 135) / 270;
         } else {
-          // Inside 45..135 gap, clamp to nearest side
           frac = (angle - 45 < 135 - angle) ? 1 : 0;
         }
         frac = Math.max(0, Math.min(1, frac));
@@ -2381,8 +3458,8 @@
 
       dialSvg.addEventListener('pointerdown', (e) => {
         if (!dialOn) return;
+        playUiClickSound(550);
         dialDragging = true;
-        dialPointerId = e.pointerId;
         dialSvg.setPointerCapture(e.pointerId);
         currentDialVal = getDialValFromPointer(e);
         updateDialUI(currentDialVal, true);
@@ -2401,16 +3478,17 @@
           const rData = ROOM_DATA[currentRoomKey];
           const finalVal = Math.round(currentDialVal);
           rData.dialVal = finalVal;
-          showToast(`${rData.dialName} set to ${finalVal}${rData.dialUnit}`);
+          showToast(`${rData.dialName} set to ${formatTemp(finalVal)}`);
+          syncWithBackend("set_thermostat", { room: currentRoomKey, temperature: finalVal });
         }
       }
 
       dialSvg.addEventListener('pointerup', stopDialDrag);
       dialSvg.addEventListener('pointercancel', stopDialDrag);
 
-      // Thermostat Power Button
       dialPowerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        playUiClickSound(600);
         dialOn = !dialOn;
         if (dialOn) {
           dialPowerBtn.classList.remove('off');
@@ -2425,110 +3503,115 @@
           dialDot.className = "dial-status-dot grey";
           showToast(`${ROOM_DATA[currentRoomKey].dialName} turned OFF`);
         }
+        syncWithBackend("thermostat_power", { room: currentRoomKey, power: dialOn });
+      });
+
+      dialGearBtn.addEventListener('click', () => {
+        playUiClickSound(700);
+        modalThermostat.classList.add('show');
       });
 
       // ------------------------------------------------------------------------
-      // 7. SCENE PILL INTERACTION (MORNING / SCENE)
+      // 8. SCENE PILL (CYCLE & RUN SCENES)
       // ------------------------------------------------------------------------
-      cardScene.addEventListener('click', (e) => {
-        // 1. Lime ripple effect
+      function applyScene(idx) {
+        const sc = SCENES_LIST[idx % SCENES_LIST.length];
+        sceneName.textContent = sc.name;
+        sceneSub.textContent = sc.sub;
+
+        // 1. Ripple
         const rect = cardScene.getBoundingClientRect();
         const ripple = document.createElement('div');
         ripple.className = 'scene-ripple';
         const size = Math.max(rect.width, rect.height) * 2;
         ripple.style.width = ripple.style.height = `${size}px`;
-        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+        ripple.style.left = `${rect.width / 2 - size / 2}px`;
+        ripple.style.top = `${rect.height / 2 - size / 2}px`;
         cardScene.appendChild(ripple);
         setTimeout(() => ripple.remove(), 1200);
 
-        // 2. Sun icon spins for 2.4s
+        // 2. Spin icon
         sceneIconCirc.classList.add('spinning');
         setTimeout(() => sceneIconCirc.classList.remove('spinning'), 2400);
 
-        // 3. Lights turn ON and brightness eases to 86%
-        if (!lightsOn) toggleLights(true);
-        setBrightness(86);
+        // 3. Brightness & Lights
+        if (sc.brightness === 0) {
+          if (lightsOn) toggleLights(false);
+        } else {
+          if (!lightsOn) toggleLights(true);
+          setBrightness(sc.brightness);
+        }
 
-        // 4. Thermostat goes to 22°
-        targetDialVal = 22;
+        // 4. Color temperature
+        setColorTemp(sc.colorTemp);
+
+        // 5. Thermostat
+        targetDialVal = sc.temp;
         animateDialTo(targetDialVal);
 
-        // 5. Music starts
-        if (!isPlaying) toggleMusicPlay();
-
-        // 6. Toast
-        showToast("Morning scene · lights 86%, 22°, music on");
-      });
-
-      // ------------------------------------------------------------------------
-      // 8. SMALL APPLIANCE (ROBOT VACUUM / TOWEL / DISHWASHER)
-      // ------------------------------------------------------------------------
-      smallToggle.addEventListener('click', () => {
-        vacuumActive = !vacuumActive;
-        const rData = ROOM_DATA[currentRoomKey];
-        if (vacuumActive) {
-          smallToggle.classList.add('active');
-          smallAppIcon.classList.add('spinning');
-          smallProgressTrack.classList.add('visible');
-          vacuumProgress = 0;
-          smallProgressBar.style.width = '0%';
-          smallStatusTxt.textContent = "Cleaning · 0% done";
-          smallAppSub.textContent = "Cleaning · 0% done";
-
-          if (vacuumInterval) clearInterval(vacuumInterval);
-          vacuumInterval = setInterval(() => {
-            vacuumProgress += 2;
-            if (vacuumProgress > 100) vacuumProgress = 100;
-            smallProgressBar.style.width = `${vacuumProgress}%`;
-            smallStatusTxt.textContent = `Cleaning · ${vacuumProgress}% done`;
-            smallAppSub.textContent = `Cleaning · ${vacuumProgress}% done`;
-
-            if (vacuumProgress >= 100) {
-              clearInterval(vacuumInterval);
-              vacuumActive = false;
-              smallToggle.classList.remove('active');
-              smallAppIcon.classList.remove('spinning');
-              smallProgressTrack.classList.remove('visible');
-              smallStatusTxt.textContent = "Docked";
-              smallAppSub.textContent = "Docked";
-              showToast("Robot vacuum finished cycle · Docked");
-            }
-          }, 1000);
-
-          showToast("Robot vacuum started cleaning");
-        } else {
-          if (vacuumInterval) clearInterval(vacuumInterval);
-          smallToggle.classList.remove('active');
-          smallAppIcon.classList.remove('spinning');
-          smallProgressTrack.classList.remove('visible');
-          smallProgressBar.style.width = '0%';
-          smallStatusTxt.textContent = "Docked";
-          smallAppSub.textContent = "Docked";
-          showToast("Robot vacuum docked");
+        // 6. Music
+        if (sc.music && !isPlaying) {
+          toggleMusicPlay();
+        } else if (!sc.music && isPlaying) {
+          toggleMusicPlay();
         }
+
+        showToast(sc.toast);
+        syncWithBackend("trigger_scene", { scene: sc.name });
+      }
+
+      cardScene.addEventListener('click', () => {
+        playUiClickSound(900);
+        currentSceneIdx = (currentSceneIdx + 1) % SCENES_LIST.length;
+        applyScene(currentSceneIdx);
       });
 
       // ------------------------------------------------------------------------
-      // 9. CEILING LIGHTS & BRIGHTNESS SLIDER (ROOM DIMS LIVE!)
+      // 9. CEILING LIGHTS & BRIGHTNESS CONTROLS
       // ------------------------------------------------------------------------
       function updateRoomAtmosphere() {
         if (lightsOn) {
-          // Dim layer: (100 - brightness)/100 * 0.28
           const dimOpacity = ((100 - brightness) / 100) * 0.28;
           roomDim.style.opacity = dimOpacity.toFixed(4);
-          // Sun glow follows brightness
           roomSun.style.opacity = (brightness / 100).toFixed(4);
-          // Bulb glow strength
+
           const glowAlpha = (brightness / 100) * 0.8;
           lightsBulbSvg.style.filter = `drop-shadow(0 0 ${10 + (brightness / 100) * 16}px rgba(255, 240, 180, ${glowAlpha}))`;
         } else {
-          // Lights off: dim layer is 0.32, sun glow is 0.15
           roomDim.style.opacity = '0.32';
           roomSun.style.opacity = '0.15';
           lightsBulbSvg.style.filter = 'none';
         }
       }
+
+      function setColorTemp(tempKey) {
+        currentColorTemp = tempKey;
+        tempChips.forEach(chip => chip.classList.toggle('active', chip.dataset.temp === tempKey));
+
+        if (tempKey === "warm") {
+          roomTint.style.backgroundColor = "rgba(255, 180, 100, 0.25)";
+          roomTint.style.opacity = "1";
+        } else if (tempKey === "neutral") {
+          roomTint.style.backgroundColor = "rgba(255, 240, 220, 0.15)";
+          roomTint.style.opacity = "1";
+        } else if (tempKey === "daylight") {
+          roomTint.style.backgroundColor = "rgba(180, 220, 255, 0.25)";
+          roomTint.style.opacity = "1";
+        } else {
+          // Mint
+          roomTint.style.opacity = "0";
+        }
+      }
+
+      tempChips.forEach(chip => {
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          playUiClickSound(700);
+          setColorTemp(chip.dataset.temp);
+          showToast(`Lighting color set to ${chip.textContent}`);
+          syncWithBackend("set_lighting_color", { room: currentRoomKey, color: chip.dataset.temp });
+        });
+      });
 
       function setBrightness(val) {
         brightness = Math.max(1, Math.min(100, Math.round(val)));
@@ -2556,30 +3639,36 @@
           showToast(`${ROOM_DATA[currentRoomKey].lightsName} turned OFF`);
         }
         updateRoomAtmosphere();
+        syncWithBackend("toggle_light", { room: currentRoomKey, state: lightsOn, brightness });
       }
 
       lightsToggle.addEventListener('click', (e) => {
         e.stopPropagation();
+        playUiClickSound(650);
         toggleLights();
       });
 
-      // Brightness Slider Dragging with live room dimming
-      let sliderDragging = false;
-      let sliderPointerId = null;
+      lightsBulbCirc.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(650);
+        toggleLights();
+      });
 
+      // Brightness Slider Dragging
+      let sliderDragging = false;
       function updateSliderFromEvent(e) {
         const rect = cardBrightness.getBoundingClientRect();
         const offsetX = e.clientX - rect.left;
         const frac = Math.max(0, Math.min(1, offsetX / rect.width));
-        const newPct = Math.round(frac * 99) + 1; // 1 to 100
+        const newPct = Math.round(frac * 99) + 1;
         setBrightness(newPct);
         sliderSun.style.transform = `rotate(${frac * 360}deg)`;
       }
 
       cardBrightness.addEventListener('pointerdown', (e) => {
         if (!lightsOn) return;
+        playUiClickSound(500);
         sliderDragging = true;
-        sliderPointerId = e.pointerId;
         cardBrightness.setPointerCapture(e.pointerId);
         updateSliderFromEvent(e);
       });
@@ -2594,14 +3683,94 @@
           sliderDragging = false;
           try { cardBrightness.releasePointerCapture(e.pointerId); } catch(err) {}
           showToast(`Brightness set to ${brightness}%`);
+          syncWithBackend("set_brightness", { room: currentRoomKey, brightness });
         }
       }
 
       cardBrightness.addEventListener('pointerup', stopSliderDrag);
       cardBrightness.addEventListener('pointercancel', stopSliderDrag);
 
+      sliderBtnMinus.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(500);
+        setBrightness(brightness - 5);
+      });
+
+      sliderBtnPlus.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playUiClickSound(500);
+        setBrightness(brightness + 5);
+      });
+
       // ------------------------------------------------------------------------
-      // 10. MUSIC PLAYER
+      // 10. SMALL APPLIANCE ACTIONS (ROBOT VACUUM / CLEANING / DOCKING)
+      // ------------------------------------------------------------------------
+      function startCleaningCycle(mode = "Regular") {
+        vacuumActive = true;
+        smallToggle.classList.add('active');
+        smallAppIcon.classList.add('spinning');
+        smallProgressTrack.classList.add('visible');
+        vacuumProgress = 0;
+        smallProgressBar.style.width = '0%';
+        smallStatusTxt.textContent = `${mode} · 0% done`;
+        smallAppSub.textContent = "Battery draining · Active";
+
+        if (vacuumInterval) clearInterval(vacuumInterval);
+        vacuumInterval = setInterval(() => {
+          vacuumProgress += 2;
+          if (vacuumProgress > 100) vacuumProgress = 100;
+          smallProgressBar.style.width = `${vacuumProgress}%`;
+          smallStatusTxt.textContent = `${mode} · ${vacuumProgress}% done`;
+
+          if (vacuumProgress >= 100) {
+            clearInterval(vacuumInterval);
+            dockAppliance();
+          }
+        }, 1000);
+
+        showToast(`${ROOM_DATA[currentRoomKey].smallName} started: ${mode}`);
+        syncWithBackend("appliance_start", { device: ROOM_DATA[currentRoomKey].smallName, mode });
+      }
+
+      function dockAppliance() {
+        if (vacuumInterval) clearInterval(vacuumInterval);
+        vacuumActive = false;
+        smallToggle.classList.remove('active');
+        smallAppIcon.classList.remove('spinning');
+        smallProgressTrack.classList.remove('visible');
+        smallProgressBar.style.width = '0%';
+        smallStatusTxt.textContent = "Docked · 98% Bat";
+        smallAppSub.textContent = "Charging at base";
+        showToast(`${ROOM_DATA[currentRoomKey].smallName} docked and charging`);
+        syncWithBackend("appliance_dock", { device: ROOM_DATA[currentRoomKey].smallName });
+      }
+
+      smallToggle.addEventListener('click', () => {
+        playUiClickSound(600);
+        if (vacuumActive) {
+          dockAppliance();
+        } else {
+          startCleaningCycle("Regular");
+        }
+      });
+
+      smallBtnAction1.addEventListener('click', () => {
+        playUiClickSound(650);
+        startCleaningCycle("Full Area Clean");
+      });
+
+      smallBtnAction2.addEventListener('click', () => {
+        playUiClickSound(650);
+        startCleaningCycle("Spot Clean");
+      });
+
+      smallBtnDock.addEventListener('click', () => {
+        playUiClickSound(650);
+        dockAppliance();
+      });
+
+      // ------------------------------------------------------------------------
+      // 11. MUSIC PLAYER WITH REAL SOUND & PLAYLIST NAVIGATION
       // ------------------------------------------------------------------------
       function formatTime(secs) {
         const m = Math.floor(secs / 60);
@@ -2617,7 +3786,6 @@
         const pct = (trackCurrentTime / track.duration) * 100;
         musicSeekFill.style.width = `${pct}%`;
 
-        // Update Equalizer
         if (isPlaying) {
           eqBars.classList.add('playing');
           musicPlayIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
@@ -2628,40 +3796,50 @@
       }
 
       function switchTrack(newIdx) {
+        playUiClickSound(700);
         currentTrackIdx = (newIdx + PLAYLIST.length) % PLAYLIST.length;
         trackCurrentTime = 0;
         const track = PLAYLIST[currentTrackIdx];
 
-        // Wipe album image
         musicArt.classList.remove('wipe');
-        void musicArt.offsetWidth; // trigger reflow
+        void musicArt.offsetWidth;
         musicArt.src = track.art;
         musicArt.classList.add('wipe');
 
-        // Roll titles
         musicTitlesBox.classList.add('roll');
         setTimeout(() => {
           updateMusicUI();
           musicTitlesBox.classList.remove('roll');
         }, 250);
 
+        if (isPlaying) startLoFiSynth();
         showToast(`Playing "${track.title}" by ${track.artist}`);
       }
 
       function toggleMusicPlay() {
+        playUiClickSound(700);
         isPlaying = !isPlaying;
         updateMusicUI();
-        showToast(isPlaying ? "Music resumed" : "Music paused");
+        if (isPlaying) {
+          startLoFiSynth();
+          showToast("Music resumed (Synthesized lo-fi chords)");
+        } else {
+          stopLoFiSynth();
+          showToast("Music paused");
+        }
       }
 
       musicPlayBtn.addEventListener('click', toggleMusicPlay);
 
       musicNextBtn.addEventListener('click', () => {
-        switchTrack(currentTrackIdx + 1);
+        if (isShuffled) {
+          switchTrack(Math.floor(Math.random() * PLAYLIST.length));
+        } else {
+          switchTrack(currentTrackIdx + 1);
+        }
       });
 
       musicPrevBtn.addEventListener('click', () => {
-        // If > 5 seconds in, restart track
         if (trackCurrentTime > 5) {
           trackCurrentTime = 0;
           updateMusicUI();
@@ -2671,20 +3849,57 @@
         }
       });
 
-      // Clickable progress bar
+      musicBtnShuffle.addEventListener('click', () => {
+        isShuffled = !isShuffled;
+        musicBtnShuffle.classList.toggle('active', isShuffled);
+        showToast(isShuffled ? "Shuffle ON" : "Shuffle OFF");
+      });
+
+      musicBtnRepeat.addEventListener('click', () => {
+        isRepeat = !isRepeat;
+        musicBtnRepeat.classList.toggle('active', isRepeat);
+        showToast(isRepeat ? "Repeat Track ON" : "Repeat Track OFF");
+      });
+
+      // Volume slider & mute
+      musicVolSlider.addEventListener('input', (e) => {
+        musicVolume = parseInt(e.target.value);
+        if (synthGainNode && audioCtx) {
+          synthGainNode.gain.setValueAtTime(0.04 * (musicVolume / 100), audioCtx.currentTime);
+        }
+      });
+
+      musicBtnMute.addEventListener('click', () => {
+        isMuted = !isMuted;
+        if (isMuted) {
+          if (synthGainNode && audioCtx) synthGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+          musicVolIcon.innerHTML = `<line x1="1" y1="1" x2="23" y2="23"></line><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>`;
+          showToast("Audio Muted");
+        } else {
+          if (synthGainNode && audioCtx) synthGainNode.gain.setValueAtTime(0.04 * (musicVolume / 100), audioCtx.currentTime);
+          musicVolIcon.innerHTML = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+          showToast("Audio Unmuted");
+        }
+      });
+
       musicSeekBar.addEventListener('click', (e) => {
+        playUiClickSound(500);
         const rect = musicSeekBar.getBoundingClientRect();
         const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         trackCurrentTime = Math.round(frac * PLAYLIST[currentTrackIdx].duration);
         updateMusicUI();
       });
 
-      // Music timer ticking every second
       musicTicker = setInterval(() => {
         if (!isPlaying) return;
         trackCurrentTime++;
         if (trackCurrentTime >= PLAYLIST[currentTrackIdx].duration) {
-          switchTrack(currentTrackIdx + 1);
+          if (isRepeat) {
+            trackCurrentTime = 0;
+            updateMusicUI();
+          } else {
+            switchTrack(currentTrackIdx + 1);
+          }
         } else {
           updateMusicUI();
         }
@@ -2692,10 +3907,176 @@
       updateMusicUI();
 
       // ------------------------------------------------------------------------
-      // 11. 3D PARALLAX EFFECT WITH MOUSE (LERP .05)
+      // 12. MODAL FORM SUBMISSIONS (DO REAL ACTIONS)
+      // ------------------------------------------------------------------------
+      // Settings: Unit Toggle
+      document.querySelectorAll('#seg-temp-unit .segment-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playUiClickSound(600);
+          document.querySelectorAll('#seg-temp-unit .segment-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          tempUnit = btn.dataset.unit;
+          updateDialUI(currentDialVal, true);
+        });
+      });
+
+      document.getElementById('toggle-sound-effects').addEventListener('click', function() {
+        playUiClickSound(600);
+        this.classList.toggle('active');
+        soundEffectsEnabled = this.classList.contains('active');
+        showToast(soundEffectsEnabled ? "Sound Effects ON" : "Sound Effects OFF");
+      });
+
+      document.getElementById('toggle-synth-audio').addEventListener('click', function() {
+        playUiClickSound(600);
+        this.classList.toggle('active');
+        synthAudioEnabled = this.classList.contains('active');
+        if (!synthAudioEnabled) stopLoFiSynth();
+        else if (isPlaying) startLoFiSynth();
+        showToast(synthAudioEnabled ? "Lo-Fi Synth ON" : "Lo-Fi Synth OFF");
+      });
+
+      document.getElementById('toggle-motion-sim').addEventListener('click', function() {
+        playUiClickSound(600);
+        this.classList.toggle('active');
+        const active = this.classList.contains('active');
+        if (active) startMotionSimulation();
+        else stopMotionSimulation();
+        showToast(active ? "Auto-Motion Simulator Started" : "Auto-Motion Simulator Stopped");
+      });
+
+      document.getElementById('btn-save-settings').addEventListener('click', () => {
+        playUiClickSound(750);
+        modalSettings.classList.remove('show');
+        showToast("System settings saved successfully");
+      });
+
+      // Add Device
+      document.getElementById('btn-submit-add-device').addEventListener('click', () => {
+        const name = document.getElementById('input-new-dev-name').value.trim() || "New Smart Appliance";
+        const room = document.getElementById('select-new-dev-room').value;
+        const type = document.getElementById('select-new-dev-type').value;
+
+        playUiClickSound(850);
+        modalAddDevice.classList.remove('show');
+        showToast(`Registered "${name}" to ${room.replace('_', ' ')}`);
+        syncWithBackend("add_device", { name, room, type });
+      });
+
+      // Thermostat Modal
+      document.querySelectorAll('#seg-hvac-mode .segment-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playUiClickSound(600);
+          document.querySelectorAll('#seg-hvac-mode .segment-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          dialSubModeTxt.textContent = `Target temperature · ${btn.dataset.mode}`;
+        });
+      });
+
+      document.getElementById('btn-apply-thermostat').addEventListener('click', () => {
+        playUiClickSound(750);
+        modalThermostat.classList.remove('show');
+        const deadband = document.getElementById('select-hysteresis').value;
+        showToast(`Thermostat updated (Deadband: ±${deadband}°C)`);
+        syncWithBackend("update_thermostat_settings", { deadband });
+      });
+
+      // Security Modal
+      document.querySelectorAll('#seg-sec-state .segment-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          playUiClickSound(700);
+          document.querySelectorAll('#seg-sec-state .segment-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const state = btn.dataset.sec;
+          if (state === "away") {
+            toggleLights(false);
+            showToast("Away Shield Armed: All lights & fans powered off");
+          } else {
+            showToast(`Security Mode: ${state.toUpperCase()}`);
+          }
+        });
+      });
+
+      document.getElementById('btn-panic-test').addEventListener('click', () => {
+        playShutterSound();
+        showToast("Panic Alert: Flashing lights!");
+        let flashes = 0;
+        const flashInt = setInterval(() => {
+          toggleLights();
+          flashes++;
+          if (flashes >= 6) {
+            clearInterval(flashInt);
+            toggleLights(true);
+          }
+        }, 300);
+      });
+
+      document.getElementById('btn-save-security').addEventListener('click', () => {
+        playUiClickSound(750);
+        modalSecurity.classList.remove('show');
+        showToast("Security profile applied");
+      });
+
+      // Lighting Modal
+      document.getElementById('btn-all-lights-on').addEventListener('click', () => {
+        playUiClickSound(700);
+        toggleLights(true);
+        document.getElementById('modal-toggle-lr').classList.add('active');
+        document.getElementById('modal-toggle-br').classList.add('active');
+        showToast("All household lights switched ON");
+      });
+
+      document.getElementById('btn-all-lights-off').addEventListener('click', () => {
+        playUiClickSound(700);
+        toggleLights(false);
+        document.getElementById('modal-toggle-lr').classList.remove('active');
+        document.getElementById('modal-toggle-br').classList.remove('active');
+        showToast("All household lights switched OFF");
+      });
+
+      document.getElementById('modal-toggle-lr').addEventListener('click', function() {
+        this.classList.toggle('active');
+        toggleLights(this.classList.contains('active'));
+      });
+
+      document.getElementById('modal-toggle-br').addEventListener('click', function() {
+        this.classList.toggle('active');
+        showToast(this.classList.contains('active') ? "Bedroom Light turned ON" : "Bedroom Light turned OFF");
+      });
+
+      document.getElementById('btn-close-lighting-modal').addEventListener('click', () => {
+        playUiClickSound(500);
+        modalLighting.classList.remove('show');
+      });
+
+      // ------------------------------------------------------------------------
+      // 13. AUTOMATED MOTION SIMULATION
+      // ------------------------------------------------------------------------
+      function startMotionSimulation() {
+        stopMotionSimulation();
+        motionSimTimer = setInterval(() => {
+          // Simulate motion detected in room
+          camMotionHud.classList.add('active');
+          showToast("Motion detected in Living Room · PIR Triggered");
+          if (!lightsOn) {
+            toggleLights(true);
+          }
+          setTimeout(() => {
+            camMotionHud.classList.remove('active');
+          }, 6000);
+        }, 45000);
+      }
+
+      function stopMotionSimulation() {
+        if (motionSimTimer) clearInterval(motionSimTimer);
+        motionSimTimer = null;
+      }
+      startMotionSimulation();
+
+      // ------------------------------------------------------------------------
+      // 14. 3D PARALLAX EFFECT WITH MOUSE (LERP .05)
       // ------------------------------------------------------------------------
       window.addEventListener('mousemove', (e) => {
-        // Normalized coordinates from center (-1 to +1)
         mouseX = e.clientX;
         mouseY = e.clientY;
         targetSx = (e.clientX / window.innerWidth) * 2 - 1;
@@ -2703,17 +4084,14 @@
       });
 
       function renderParallax() {
-        // Check if desktop (width > 900)
         if (window.innerWidth > 900) {
           currentSx += (targetSx - currentSx) * 0.05;
           currentSy += (targetSy - currentSy) * 0.05;
 
-          // Room parallax: scale(1.04) translate(sx * 18px, sy * 12px)
           const roomTx = (currentSx * 18).toFixed(2);
           const roomTy = (currentSy * 12).toFixed(2);
           room.style.transform = `scale(1.04) translate(${roomTx}px, ${roomTy}px)`;
 
-          // UI layer rotate and translate
           const rotY = (currentSx * 4).toFixed(2);
           const rotX = (-currentSy * 3).toFixed(2);
           const uiTx = (currentSx * -14).toFixed(2);
@@ -2724,7 +4102,6 @@
           uiLayer.style.transform = '';
         }
 
-        // ?rec cursor position follow
         if (recCursor.classList.contains('active')) {
           recCursor.style.left = `${mouseX}px`;
           recCursor.style.top = `${mouseY}px`;
@@ -2735,7 +4112,7 @@
       renderParallax();
 
       // ------------------------------------------------------------------------
-      // 12. ?rec MODE CUSTOM FROSTED CURSOR
+      // 15. ?rec MODE CUSTOM FROSTED CURSOR
       // ------------------------------------------------------------------------
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('rec')) {
@@ -2745,7 +4122,7 @@
         window.addEventListener('mousedown', () => recCursor.classList.add('pressed'));
         window.addEventListener('mouseup', () => recCursor.classList.remove('pressed'));
 
-        const interactiveEls = document.querySelectorAll('button, .tab-pill, .rail-btn, .spatial-toggle, #card-camera, #card-scene, #card-brightness, .music-seek-bar');
+        const interactiveEls = document.querySelectorAll('button, .tab-pill, .rail-btn, .spatial-toggle, #card-camera, #card-scene, #card-brightness, .music-seek-bar, .small-action-pill, .temp-chip');
         interactiveEls.forEach(el => {
           el.addEventListener('mouseenter', () => recCursor.classList.add('hover'));
           el.addEventListener('mouseleave', () => recCursor.classList.remove('hover'));
@@ -2753,42 +4130,35 @@
       }
 
       // ------------------------------------------------------------------------
-      // 13. STAGGERED INTRO ANIMATION SEQUENCE
+      // 16. STAGGERED INTRO ANIMATION SEQUENCE
       // ------------------------------------------------------------------------
       window.addEventListener('DOMContentLoaded', () => {
-        // Initial tab indicator placement
         const initialActiveTab = tabBar.querySelector('.tab-pill.active');
         updateTabIndicator(initialActiveTab);
 
-        // Step 1: Un-blur room (100ms)
         setTimeout(() => {
           room.classList.remove('initial-blur');
         }, 150);
 
-        // Step 2: Window flies forward (300ms)
         setTimeout(() => {
           mainWindow.classList.remove('intro-hidden');
         }, 350);
 
-        // Step 3: Tab bar drops in (550ms)
         setTimeout(() => {
           tabBar.classList.remove('intro-hidden');
           updateTabIndicator(initialActiveTab);
         }, 550);
 
-        // Step 4: Left rail slides in (700ms)
         setTimeout(() => {
           iconRail.classList.remove('intro-hidden');
         }, 700);
 
-        // Step 5: Cards rise and un-blur in stagger
         innerCards.forEach((card, idx) => {
           setTimeout(() => {
             card.classList.remove('intro-hidden');
           }, 850 + idx * 110);
         });
 
-        // Step 6: Dial sweeps from 16 to 22, brightness fills to 72%
         setTimeout(() => {
           currentDialVal = 16;
           animateDialTo(22);
@@ -2796,7 +4166,6 @@
         }, 1600);
       });
 
-      // Resize listener for responsive tab indicator
       window.addEventListener('resize', () => {
         const activeTab = tabBar.querySelector('.tab-pill.active');
         updateTabIndicator(activeTab);
