@@ -1,22 +1,3 @@
 {
-  "version": 2,
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/api",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/haven",
-      "destination": "/haven.html"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
-    }
-  ]
+  "cleanUrls": true
 }
