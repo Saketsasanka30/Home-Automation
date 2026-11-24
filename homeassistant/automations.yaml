@@ -1,0 +1,240 @@
+# ==============================================================================
+# Home Assistant Automation Workflows
+# Project: Home Automation System | Python, IoT & Home Assistant
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 1A: Motion-Based Lighting (Motion Detected -> Turn ON)
+# Description: Turns ON the living room light when motion is detected, provided
+#              Automatic Mode is ON, Away Mode is OFF, and Manual Override is OFF.
+# ------------------------------------------------------------------------------
+- id: "automation_01a_motion_light_on"
+  alias: "Automation 1A: Motion Lighting - Turn ON"
+  description: "Turns ON Living Room light when PIR detects movement and auto mode is enabled"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.automation_mode
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+    - condition: state
+      entity_id: input_boolean.manual_override
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.living_room_light
+    - service: system_log.write
+      data:
+        message: "[Auto-1A] Motion detected in Living Room. Light turned ON."
+        level: info
+  mode: restart
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 1B: Motion-Based Lighting (No Motion for 30s -> Turn OFF)
+# Description: Turns OFF the living room light after exactly 30 seconds of no
+#              motion, preventing energy waste.
+# ------------------------------------------------------------------------------
+- id: "automation_01b_motion_light_off"
+  alias: "Automation 1B: Motion Lighting - Turn OFF After 30s"
+  description: "Turns OFF Living Room light when no motion has been detected for 30 seconds"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.living_room_motion
+      to: "off"
+      for:
+        seconds: 30
+  condition:
+    - condition: state
+      entity_id: input_boolean.automation_mode
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+    - condition: state
+      entity_id: input_boolean.manual_override
+      state: "off"
+    - condition: state
+      entity_id: switch.living_room_light
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.living_room_light
+    - service: system_log.write
+      data:
+        message: "[Auto-1B] No motion detected for 30s. Light turned OFF."
+        level: info
+  mode: single
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 2A: Temperature-Based Fan Control (Temp > 30°C -> Turn ON)
+# Description: Automatically turns ON the fan when room temperature exceeds 30°C.
+# ------------------------------------------------------------------------------
+- id: "automation_02a_temp_fan_on"
+  alias: "Automation 2A: Temperature Fan Control - Turn ON (>30°C)"
+  description: "Turns ON the fan when temperature exceeds 30°C"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.room_temperature
+      above: 30.0
+  condition:
+    - condition: state
+      entity_id: input_boolean.automation_mode
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.away_mode
+      state: "off"
+    - condition: state
+      entity_id: input_boolean.manual_override
+      state: "off"
+    - condition: state
+      entity_id: switch.living_room_fan
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.living_room_fan
+    - service: system_log.write
+      data:
+        message: "[Auto-2A] Temperature exceeded 30°C. Fan automatically switched ON."
+        level: info
+  mode: single
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 2B: Temperature-Based Fan Control (Temp < 28°C -> Turn OFF)
+# Description: Turns OFF the fan when temperature cools below 28°C (2°C hysteresis
+#              prevents rapid ON/OFF relay chatter).
+# ------------------------------------------------------------------------------
+- id: "automation_02b_temp_fan_off"
+  alias: "Automation 2B: Temperature Fan Control - Turn OFF (<28°C)"
+  description: "Turns OFF the fan when temperature falls below 28°C (Hysteresis)"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.room_temperature
+      below: 28.0
+  condition:
+    - condition: state
+      entity_id: input_boolean.automation_mode
+      state: "on"
+    - condition: state
+      entity_id: input_boolean.manual_override
+      state: "off"
+    - condition: state
+      entity_id: switch.living_room_fan
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.living_room_fan
+    - service: system_log.write
+      data:
+        message: "[Auto-2B] Temperature dropped below 28°C. Fan automatically switched OFF."
+        level: info
+  mode: single
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 3: Night Mode Routine
+# Description: Triggered by scheduled time (22:00) or when Night Mode is toggled ON.
+#              Dims lighting, shuts off unnecessary lights, keeps PIR armed.
+# ------------------------------------------------------------------------------
+- id: "automation_03_night_mode_start"
+  alias: "Automation 3: Night Mode Activation"
+  description: "Activates night profile: turns off bedroom light, ensures night settings"
+  trigger:
+    - platform: time
+      at: "22:00:00"
+    - platform: state
+      entity_id: input_boolean.night_mode
+      to: "on"
+  action:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.night_mode
+    - service: switch.turn_off
+      target:
+        entity_id: switch.bedroom_light
+    - service: switch.turn_off
+      target:
+        entity_id: switch.living_room_light
+    - service: system_log.write
+      data:
+        message: "[Auto-3] Night Mode engaged. Unnecessary lighting extinguished."
+        level: info
+  mode: single
+
+# Night Mode Morning Reset at 06:00
+- id: "automation_03b_night_mode_end"
+  alias: "Automation 3B: Night Mode Deactivation"
+  description: "Deactivates Night Mode at 06:00 AM"
+  trigger:
+    - platform: time
+      at: "06:00:00"
+  action:
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.night_mode
+    - service: system_log.write
+      data:
+        message: "[Auto-3B] Morning arrived. Night Mode deactivated."
+        level: info
+  mode: single
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 4: Away Mode Routine
+# Description: When user leaves home and activates Away Mode, all lights and fans
+#              are immediately powered OFF, and non-security automations are locked.
+# ------------------------------------------------------------------------------
+- id: "automation_04_away_mode_activated"
+  alias: "Automation 4: Away Mode - Secure & Energy Saver"
+  description: "Turns OFF all lights and fans when user toggles Away Mode"
+  trigger:
+    - platform: state
+      entity_id: input_boolean.away_mode
+      to: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.living_room_light
+          - switch.bedroom_light
+          - switch.living_room_fan
+    - service: system_log.write
+      data:
+        message: "[Auto-4] Away Mode activated! All household appliances switched OFF."
+        level: warning
+  mode: single
+
+# ------------------------------------------------------------------------------
+# AUTOMATION 5: Manual Override Handler
+# Description: When manual override is toggled or when physical manual toggles occur,
+#              updates state and alerts the system so automations do not fight user.
+# ------------------------------------------------------------------------------
+- id: "automation_05_manual_override_toggle"
+  alias: "Automation 5: Manual Override State Manager"
+  description: "Handles user manual intervention and prevents automated conflict"
+  trigger:
+    - platform: state
+      entity_id:
+        - switch.living_room_light
+        - switch.bedroom_light
+        - switch.living_room_fan
+      to: ~
+  condition:
+    # Trigger only if user switched device manually (not from an automation service call context)
+    - condition: template
+      value_template: "{{ trigger.to_state.context.user_id is not none }}"
+  action:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.manual_override
+    - service: system_log.write
+      data:
+        message: "[Auto-5] User manually interacted with {{ trigger.entity_id }}. Manual override enabled."
+        level: info
+  mode: queued

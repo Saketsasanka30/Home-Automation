@@ -1,0 +1,2808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAVEN — Spatial Smart-Home Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ==========================================================================
+       1. CSS TOKENS & FLUID SCALING
+       ========================================================================== */
+    :root {
+      --grad: linear-gradient(135deg, #e3fbb0 0%, #8ef0d6 45%, #3cc4b4 100%);
+      --m2: #7ee8d0;
+      --m3: #3cc4b4;
+      --mint-glow: rgba(142, 240, 214, 0.4);
+      --lime-glow: rgba(227, 251, 176, 0.5);
+      
+      --glass-win: rgba(86, 90, 82, 0.38);
+      --glass-card: rgba(255, 255, 255, 0.075);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-win-border: rgba(255, 255, 255, 0.22);
+      
+      --text: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.62);
+      --text-dark: #1b1d19;
+      --text-teal: #13443e;
+      
+      --out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease: cubic-bezier(0.65, 0, 0.35, 1);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 1rem = 10px on 1440x810 viewport */
+    html {
+      font-size: min(calc(100vw / 144), calc(100vh / 81));
+      box-sizing: border-box;
+      background: #0d0f0e;
+      color: var(--text);
+      font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    *, *::before, *::after {
+      box-sizing: inherit;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Glass material utility */
+    .glass {
+      backdrop-filter: blur(28px) saturate(1.35);
+      -webkit-backdrop-filter: blur(28px) saturate(1.35);
+      border: 1px solid var(--glass-win-border);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                  0 3rem 8rem -3rem rgba(30, 28, 20, 0.45);
+    }
+
+    .card-glass {
+      background: var(--glass-card);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(18px) saturate(1.2);
+      -webkit-backdrop-filter: blur(18px) saturate(1.2);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+      transition: background 0.4s var(--out), border-color 0.4s var(--out), transform 0.4s var(--out);
+    }
+
+    /* ==========================================================================
+       2. SCENE LAYERS & ROOM VIDEO
+       ========================================================================== */
+    #stage {
+      position: absolute;
+      inset: 0;
+      perspective: 1600px;
+      overflow: hidden;
+    }
+
+    #room {
+      position: absolute;
+      inset: -3%;
+      z-index: 1;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
+      filter: blur(0px);
+      transition: filter 1.6s var(--out);
+    }
+
+    #room.initial-blur {
+      filter: blur(24px);
+    }
+
+    #room-video, #room-still {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Overlays inside #room */
+    #room-sun {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(40% 50% at 18% 30%, rgba(255, 236, 190, 0.35), transparent 70%);
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+      opacity: 0.72;
+      transition: opacity 0.5s var(--out);
+    }
+
+    #room-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 40%, rgba(12, 14, 11, 0.48) 100%);
+      pointer-events: none;
+    }
+
+    #room-dim {
+      position: absolute;
+      inset: 0;
+      background-color: #1b1a14;
+      pointer-events: none;
+      opacity: 0.0784; /* (100 - 72)/100 * 0.28 */
+      transition: opacity 1s var(--ease);
+    }
+
+    /* ==========================================================================
+       3. SPATIAL UI CONTAINER
+       ========================================================================== */
+    #ui-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      transform-style: preserve-3d;
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    #ui-layer > * {
+      pointer-events: auto;
+    }
+
+    /* ==========================================================================
+       4. TOP TAB BAR
+       ========================================================================== */
+    #tab-bar {
+      position: absolute;
+      top: 3.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 6rem;
+      padding: 0.6rem;
+      border-radius: 999rem;
+      background: var(--glass-win);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      z-index: 20;
+      transition: transform 1.2s var(--spring), opacity 1s var(--out);
+    }
+
+    #tab-bar.intro-hidden {
+      transform: translate(-50%, -8rem);
+      opacity: 0;
+    }
+
+    .tab-pill {
+      position: relative;
+      height: 4.8rem;
+      padding: 0 2.2rem;
+      border-radius: 999rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      z-index: 2;
+      transition: color 0.35s var(--out);
+    }
+
+    .tab-pill svg {
+      width: 1.8rem;
+      height: 1.8rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.35s var(--out);
+    }
+
+    .tab-pill.active {
+      color: var(--text-dark);
+    }
+
+    .tab-indicator {
+      position: absolute;
+      top: 0.6rem;
+      bottom: 0.6rem;
+      border-radius: 999rem;
+      background: #ffffff;
+      box-shadow: 0 0.8rem 2.4rem rgba(0, 0, 0, 0.25);
+      z-index: 1;
+      transition: left 0.7s var(--spring), width 0.7s var(--spring);
+      pointer-events: none;
+    }
+
+    .tab-add-btn {
+      width: 4.8rem;
+      height: 4.8rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 0.4s var(--spring), background 0.25s var(--out);
+      margin-left: 0.4rem;
+    }
+
+    .tab-add-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      transform: rotate(90deg);
+    }
+
+    .tab-add-btn svg {
+      width: 1.8rem;
+      height: 1.8rem;
+      stroke: currentColor;
+      stroke-width: 2.5;
+    }
+
+    /* ==========================================================================
+       5. LEFT ICON RAIL
+       ========================================================================== */
+    #icon-rail {
+      position: absolute;
+      left: 11.4rem;
+      top: 27.4rem;
+      width: 6.4rem;
+      padding: 0.8rem 0;
+      border-radius: 999rem;
+      background: var(--glass-win);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      z-index: 20;
+      transition: transform 1.2s var(--spring), opacity 1s var(--out);
+    }
+
+    #icon-rail.intro-hidden {
+      transform: translateX(-12rem);
+      opacity: 0;
+    }
+
+    .rail-btn {
+      position: relative;
+      width: 4.8rem;
+      height: 4.8rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: transform 0.3s var(--spring), background 0.3s var(--out), color 0.3s var(--out);
+    }
+
+    .rail-btn svg {
+      width: 2rem;
+      height: 2rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .rail-btn:hover {
+      transform: scale(1.08);
+      color: #ffffff;
+    }
+
+    .rail-btn.active {
+      background: #ffffff;
+      color: var(--text-dark);
+      box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.28);
+    }
+
+    .rail-tooltip {
+      position: absolute;
+      left: calc(100% + 1.4rem);
+      padding: 0.6rem 1.4rem;
+      border-radius: 999rem;
+      background: rgba(30, 32, 28, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(16px);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #ffffff;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateX(-0.8rem);
+      transition: opacity 0.25s var(--out), transform 0.3s var(--spring);
+      box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.3);
+    }
+
+    .rail-btn:hover .rail-tooltip {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ==========================================================================
+       6. MAIN SPATIAL WINDOW & CARDS
+       ========================================================================== */
+    #main-window {
+      position: absolute;
+      left: 20.4rem;
+      top: 11.2rem;
+      width: 111.8rem;
+      height: 63.4rem;
+      border-radius: 4.2rem;
+      background: var(--glass-win);
+      z-index: 10;
+      transition: transform 1.4s var(--out), opacity 1.2s var(--out);
+      will-change: transform;
+    }
+
+    #main-window.intro-hidden {
+      transform: translateZ(-260px) translateY(6rem) scale(0.9);
+      opacity: 0;
+    }
+
+    .inner-card {
+      position: absolute;
+      border-radius: 2.8rem;
+      overflow: hidden;
+      transition: transform 0.6s var(--spring), opacity 0.5s var(--out), box-shadow 0.4s var(--out);
+    }
+
+    .inner-card.intro-hidden {
+      transform: translateY(3.5rem);
+      opacity: 0;
+      filter: blur(8px);
+    }
+
+    .inner-card.room-dip {
+      transform: translateY(0.8rem) scale(0.985);
+    }
+
+    /* 6.1 LIVE CAMERA CARD */
+    #card-camera {
+      left: 2.2rem;
+      top: 1.8rem;
+      width: 53.6rem;
+      height: 27rem;
+      cursor: pointer;
+      z-index: 5;
+      transition: all 0.8s var(--ease);
+    }
+
+    #card-camera.expanded {
+      left: 1.8rem;
+      top: 1.8rem;
+      width: 108.2rem;
+      height: 59.8rem;
+      z-index: 40;
+      box-shadow: 0 4rem 12rem rgba(0, 0, 0, 0.6);
+    }
+
+    .cam-feed-box {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    #cam-video-el {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.35);
+      transform-origin: 62% 45%;
+      filter: contrast(1.08);
+      display: block;
+    }
+
+    #cam-img-el {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .cam-feed-box.kenburns #cam-img-el {
+      animation: kenBurns 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes kenBurns {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.15) translate(-2%, -2%); }
+    }
+
+    /* CRT scanlines */
+    .cam-scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 2px,
+        rgba(0, 0, 0, 0.28) 3px,
+        rgba(0, 0, 0, 0.28) 4px
+      );
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .cam-gradients {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, transparent 35%, transparent 65%, rgba(0, 0, 0, 0.65) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .cam-top-row {
+      position: absolute;
+      top: 1.8rem;
+      left: 2rem;
+      right: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 4;
+    }
+
+    .cam-live-chip {
+      padding: 0.5rem 1.4rem;
+      border-radius: 999rem;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.04rem;
+    }
+
+    .cam-live-dot {
+      width: 0.8rem;
+      height: 0.8rem;
+      border-radius: 50%;
+      background: var(--m2);
+      box-shadow: 0 0 1rem var(--m2);
+      animation: pulseDot 1.8s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.65); opacity: 0.45; }
+    }
+
+    .cam-rec-time {
+      font-family: monospace;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      letter-spacing: 0.08rem;
+    }
+
+    .cam-bottom-label {
+      position: absolute;
+      bottom: 1.8rem;
+      left: 2rem;
+      z-index: 4;
+      font-size: 1.55rem;
+      font-weight: 600;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    }
+
+    .cam-expand-hint {
+      position: absolute;
+      bottom: 1.8rem;
+      right: 2rem;
+      z-index: 4;
+      width: 3.4rem;
+      height: 3.4rem;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s var(--spring);
+    }
+
+    #card-camera:hover .cam-expand-hint {
+      transform: scale(1.15);
+    }
+
+    /* Wipe curtain for room switches */
+    .cam-curtain {
+      position: absolute;
+      inset: 0;
+      background: #111412;
+      z-index: 10;
+      clip-path: inset(0 0 100% 0);
+      pointer-events: none;
+    }
+
+    .cam-curtain.wiping-in {
+      transition: clip-path 0.45s var(--ease);
+      clip-path: inset(0 0 0 0);
+    }
+
+    .cam-curtain.wiping-out {
+      transition: clip-path 0.5s var(--ease);
+      clip-path: inset(100% 0 0 0);
+    }
+
+    /* 6.2 THERMOSTAT DIAL CARD */
+    #card-thermostat {
+      left: 57.8rem;
+      top: 1.8rem;
+      width: 51.8rem;
+      height: 40.2rem;
+      padding: 2.4rem 2.8rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dial-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .dial-title-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .dial-title {
+      font-size: 2.6rem;
+      font-weight: 600;
+      letter-spacing: -0.02rem;
+    }
+
+    .dial-status-chip {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.4rem 1.2rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .dial-status-dot {
+      width: 0.8rem;
+      height: 0.8rem;
+      border-radius: 50%;
+      background: var(--m2);
+      box-shadow: 0 0 0.8rem var(--m2);
+    }
+
+    .dial-status-dot.orange {
+      background: #ffaa54;
+      box-shadow: 0 0 0.8rem #ffaa54;
+    }
+
+    .dial-status-dot.grey {
+      background: #777;
+      box-shadow: none;
+    }
+
+    .dial-gear-btn {
+      width: 4.4rem;
+      height: 4.4rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: transform 0.5s var(--spring), color 0.3s;
+    }
+
+    .dial-gear-btn:hover {
+      color: #ffffff;
+      transform: rotate(120deg);
+    }
+
+    .dial-gear-btn svg {
+      width: 2rem;
+      height: 2rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    /* SVG Dial Container */
+    .dial-visual-wrap {
+      position: relative;
+      width: 26rem;
+      height: 26rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -1rem;
+    }
+
+    .dial-svg {
+      width: 26rem;
+      height: 26rem;
+      overflow: visible;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .dial-svg:active {
+      cursor: grabbing;
+    }
+
+    .dial-track {
+      stroke: rgba(40, 42, 38, 0.45);
+      stroke-width: 22;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .dial-arc-glow {
+      stroke: url(#mintGrad);
+      stroke-width: 28;
+      stroke-linecap: round;
+      fill: none;
+      filter: blur(8px);
+      opacity: 0.55;
+      transition: stroke-dashoffset 0.7s var(--out);
+    }
+
+    .dial-arc {
+      stroke: url(#mintGrad);
+      stroke-width: 22;
+      stroke-linecap: round;
+      fill: none;
+      transition: stroke-dashoffset 0.7s var(--out);
+    }
+
+    .dial-knob {
+      fill: #ffffff;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+      transition: cx 0.7s var(--out), cy 0.7s var(--out);
+    }
+
+    /* Center power toggle inside dial */
+    .dial-power-btn {
+      position: absolute;
+      width: 6.4rem;
+      height: 6.4rem;
+      border-radius: 50%;
+      background: #1b1e1c;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--m2);
+      box-shadow: 0 0 2.4rem rgba(142, 240, 214, 0.45);
+      transition: box-shadow 0.4s var(--out), transform 0.25s var(--spring), color 0.3s;
+      z-index: 6;
+    }
+
+    .dial-power-btn:hover {
+      transform: scale(1.08);
+    }
+
+    .dial-power-btn.off {
+      color: #666;
+      box-shadow: none;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .dial-power-btn svg {
+      width: 2.4rem;
+      height: 2.4rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+    }
+
+    .dial-svg.off-mode {
+      opacity: 0.35;
+      filter: grayscale(0.9);
+      pointer-events: none;
+    }
+
+    .dial-bottom-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      margin-top: -1.6rem;
+    }
+
+    .dial-temp-value {
+      font-size: 4.6rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.04rem;
+    }
+
+    .dial-sub-target {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+    }
+
+    /* 6.3 SCENE PILL */
+    #card-scene {
+      left: 2.2rem;
+      top: 30.6rem;
+      width: 26.2rem;
+      height: 7rem;
+      padding: 0 1.2rem 0 1rem;
+      border-radius: 999rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      position: absolute;
+      overflow: hidden;
+    }
+
+    .scene-left {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
+    .scene-icon-circ {
+      width: 5rem;
+      height: 5rem;
+      border-radius: 50%;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-teal);
+      box-shadow: 0 0.4rem 1.6rem var(--mint-glow);
+      flex-shrink: 0;
+    }
+
+    .scene-icon-circ svg {
+      width: 2.4rem;
+      height: 2.4rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+
+    .scene-icon-circ.spinning svg {
+      animation: spin360 2.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes spin360 {
+      100% { transform: rotate(360deg); }
+    }
+
+    .scene-texts {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .scene-title {
+      font-size: 1.65rem;
+      font-weight: 600;
+    }
+
+    .scene-tag {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+    }
+
+    .scene-play-btn {
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: transform 0.3s var(--spring), background 0.3s;
+    }
+
+    #card-scene:hover .scene-play-btn {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .scene-play-btn svg {
+      width: 1.6rem;
+      height: 1.6rem;
+      fill: currentColor;
+      margin-left: 0.2rem;
+    }
+
+    .scene-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(227, 251, 176, 0.7) 0%, rgba(142, 240, 214, 0) 70%);
+      transform: scale(0);
+      pointer-events: none;
+      animation: rippleAnim 1.2s ease-out forwards;
+    }
+
+    @keyframes rippleAnim {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* 6.4 SMALL APPLIANCE CARD (Robot Vacuum / Dishwasher / Towel / Purifier) */
+    #card-small-appliance {
+      left: 2.2rem;
+      top: 39.4rem;
+      width: 26.2rem;
+      height: 22.2rem;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .small-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .small-icons-group {
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .small-icon-circ {
+      width: 4.2rem;
+      height: 4.2rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: transform 0.4s var(--spring);
+    }
+
+    .small-icon-circ.spinning svg {
+      animation: spin360 2s linear infinite;
+    }
+
+    .small-icon-circ svg {
+      width: 2rem;
+      height: 2rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .small-status-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--m2);
+      text-align: right;
+    }
+
+    .small-progress-track {
+      width: 100%;
+      height: 0.6rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      margin: 1.2rem 0;
+      display: none;
+    }
+
+    .small-progress-track.visible {
+      display: block;
+    }
+
+    .small-progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999rem;
+      background: var(--grad);
+      transition: width 0.5s ease-out;
+    }
+
+    .small-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .small-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .small-title {
+      font-size: 1.7rem;
+      font-weight: 600;
+    }
+
+    .small-subline {
+      font-size: 1.3rem;
+      color: var(--text-muted);
+    }
+
+    /* Reusable Toggle switch */
+    .spatial-toggle {
+      width: 4.8rem;
+      height: 2.8rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.16);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.35s var(--out);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      flex-shrink: 0;
+    }
+
+    .spatial-toggle::after {
+      content: "";
+      position: absolute;
+      top: 0.3rem;
+      left: 0.3rem;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      transition: transform 0.35s var(--spring), background 0.3s;
+    }
+
+    .spatial-toggle.active {
+      background: var(--m2);
+      border-color: var(--m2);
+    }
+
+    .spatial-toggle.active::after {
+      transform: translateX(2rem);
+      background: #1b1d19;
+    }
+
+    /* 6.5 GRADIENT CARD: CEILING LIGHTS */
+    #card-lights {
+      left: 30.2rem;
+      top: 30.6rem;
+      width: 25.6rem;
+      height: 22.4rem;
+      padding: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: default;
+    }
+
+    #card-lights.on {
+      background: var(--grad);
+      border-color: rgba(255, 255, 255, 0.4);
+      color: var(--text-teal);
+      box-shadow: 0 2rem 5rem rgba(60, 196, 180, 0.35);
+    }
+
+    #card-lights.on .lights-title,
+    #card-lights.on .lights-state,
+    #card-lights.on .lights-status-text {
+      color: var(--text-teal);
+    }
+
+    #card-lights.on .lights-bulb-circ {
+      background: rgba(19, 68, 62, 0.12);
+      color: var(--text-teal);
+      border-color: rgba(19, 68, 62, 0.2);
+    }
+
+    .lights-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lights-bulb-circ {
+      width: 4.6rem;
+      height: 4.6rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: all 0.4s var(--out);
+    }
+
+    .lights-bulb-circ svg {
+      width: 2.2rem;
+      height: 2.2rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+      filter: drop-shadow(0 0 10px rgba(255, 240, 180, 0.7));
+      transition: filter 0.4s var(--out);
+    }
+
+    .lights-status-text {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .lights-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .lights-labels {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .lights-title {
+      font-size: 1.7rem;
+      font-weight: 600;
+    }
+
+    .lights-state {
+      font-size: 1.3rem;
+      color: var(--text-muted);
+    }
+
+    /* 6.6 BRIGHTNESS SLIDER */
+    #card-brightness {
+      left: 30.2rem;
+      top: 54.8rem;
+      width: 25.6rem;
+      height: 7rem;
+      padding: 0;
+      border-radius: 999rem;
+      position: absolute;
+      overflow: hidden;
+      cursor: ew-resize;
+      touch-action: none;
+    }
+
+    #card-brightness.disabled {
+      opacity: 0.45;
+      filter: grayscale(1);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .slider-track-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 72%;
+      min-width: 18%;
+      background: var(--grad);
+      border-radius: 999rem;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 2rem var(--mint-glow);
+      transition: width 0.08s linear;
+      pointer-events: none;
+    }
+
+    .slider-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .slider-sun-icon {
+      width: 2.4rem;
+      height: 2.4rem;
+      color: var(--text-teal);
+      transition: transform 0.1s linear;
+    }
+
+    .slider-sun-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+    }
+
+    .slider-pct {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-teal);
+    }
+
+    /* 6.7 MUSIC PLAYER */
+    #card-music {
+      left: 57.8rem;
+      top: 43.6rem;
+      width: 51.8rem;
+      height: 18.2rem;
+      padding: 1.6rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .music-art-wrap {
+      width: 15rem;
+      height: 15rem;
+      border-radius: 2rem;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .music-art-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s var(--out);
+    }
+
+    .music-art-img.wipe {
+      animation: artWipe 0.5s var(--ease);
+    }
+
+    @keyframes artWipe {
+      0% { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
+      100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    }
+
+    .music-right {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0.4rem 0.6rem 0.4rem 0;
+      overflow: hidden;
+    }
+
+    .music-top-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .now-playing-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.35rem 1rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .music-note-badge {
+      width: 1.4rem;
+      height: 1.4rem;
+      color: var(--m2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .equalizer-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.25rem;
+      height: 1.1rem;
+    }
+
+    .eq-bar {
+      width: 0.25rem;
+      border-radius: 0.2rem;
+      background: var(--m2);
+      height: 30%;
+    }
+
+    .playing .eq-bar:nth-child(1) { animation: eqBounce 0.7s infinite alternate ease-in-out; }
+    .playing .eq-bar:nth-child(2) { animation: eqBounce 0.9s infinite alternate 0.2s ease-in-out; }
+    .playing .eq-bar:nth-child(3) { animation: eqBounce 0.6s infinite alternate 0.4s ease-in-out; }
+
+    @keyframes eqBounce {
+      0% { height: 20%; }
+      100% { height: 100%; }
+    }
+
+    .music-time-display {
+      font-family: monospace;
+      font-size: 1.25rem;
+      color: var(--text-muted);
+    }
+
+    .music-titles-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      overflow: hidden;
+    }
+
+    .music-song-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: transform 0.4s var(--out), opacity 0.4s;
+    }
+
+    .music-artist-name {
+      font-size: 1.35rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: transform 0.4s var(--out), opacity 0.4s;
+    }
+
+    .music-titles-box.roll .music-song-title,
+    .music-titles-box.roll .music-artist-name {
+      transform: translateY(-2rem);
+      opacity: 0;
+    }
+
+    .music-seek-bar {
+      width: 100%;
+      height: 0.4rem;
+      border-radius: 999rem;
+      background: rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      position: relative;
+      margin: 0.6rem 0;
+    }
+
+    .music-seek-fill {
+      height: 100%;
+      width: 35%;
+      border-radius: 999rem;
+      background: var(--grad);
+      transition: width 0.15s linear;
+    }
+
+    .music-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
+    .music-btn {
+      width: 3.4rem;
+      height: 3.4rem;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.25s var(--spring), color 0.2s;
+    }
+
+    .music-btn:hover {
+      color: #ffffff;
+      transform: scale(1.15);
+    }
+
+    .music-btn svg {
+      width: 1.8rem;
+      height: 1.8rem;
+      fill: currentColor;
+    }
+
+    .music-play-pause-btn {
+      width: 4.4rem;
+      height: 4.4rem;
+      border-radius: 50%;
+      background: #ffffff;
+      color: var(--text-dark);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0.6rem 2rem rgba(0, 0, 0, 0.35);
+      transition: transform 0.3s var(--spring), background 0.2s;
+    }
+
+    .music-play-pause-btn:hover {
+      transform: scale(1.1);
+      background: var(--m2);
+    }
+
+    .music-play-pause-btn svg {
+      width: 2rem;
+      height: 2rem;
+      fill: currentColor;
+    }
+
+    /* ==========================================================================
+       7. TOAST NOTIFICATION & ?rec CURSOR
+       ========================================================================== */
+    #spatial-toast {
+      position: fixed;
+      bottom: 3.6rem;
+      left: 50%;
+      transform: translate(-50%, 8rem);
+      padding: 1.2rem 2.6rem;
+      border-radius: 999rem;
+      background: rgba(30, 32, 28, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 2rem 5rem rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: #ffffff;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.7s var(--out), opacity 0.5s var(--out);
+    }
+
+    #spatial-toast.show {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    .toast-check-circ {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      background: var(--m2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dark);
+      flex-shrink: 0;
+    }
+
+    .toast-check-circ svg {
+      width: 1.3rem;
+      height: 1.3rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ?rec frosted cursor circle */
+    #rec-cursor {
+      position: fixed;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s var(--spring), height 0.2s var(--spring), background 0.2s;
+      display: none;
+    }
+
+    #rec-cursor.active {
+      display: block;
+    }
+
+    #rec-cursor.hover {
+      background: rgba(142, 240, 214, 0.35);
+      border-color: var(--m2);
+      width: 62px;
+      height: 62px;
+    }
+
+    #rec-cursor.pressed {
+      transform: translate(-50%, -50%) scale(0.85);
+      background: rgba(142, 240, 214, 0.5);
+    }
+
+    /* ==========================================================================
+       8. RESPONSIVE DESIGN (<= 900px)
+       ========================================================================== */
+    @media (max-width: 900px) {
+      html {
+        font-size: 10px;
+      }
+
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      #stage {
+        perspective: none;
+        position: relative;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      #room {
+        position: fixed;
+        transform: none !important;
+      }
+
+      #ui-layer {
+        position: relative;
+        transform: none !important;
+        padding: 2rem 1.6rem 6rem;
+      }
+
+      #tab-bar {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none !important;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 0.6rem;
+        margin-bottom: 2rem;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #tab-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .tab-pill {
+        flex-shrink: 0;
+      }
+
+      #icon-rail {
+        display: none;
+      }
+
+      #main-window {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: auto;
+        transform: none !important;
+        opacity: 1 !important;
+        border-radius: 3rem;
+        padding: 1.6rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.6rem;
+      }
+
+      .inner-card {
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        transform: none !important;
+        opacity: 1 !important;
+        filter: none !important;
+      }
+
+      /* 2-column mobile layout rules */
+      #card-camera {
+        grid-column: 1 / -1;
+        aspect-ratio: 16 / 9;
+        height: auto !important;
+      }
+
+      #card-thermostat {
+        grid-column: 1 / -1;
+        height: 38rem !important;
+      }
+
+      #card-scene {
+        grid-column: 1;
+        height: 7.6rem !important;
+      }
+
+      #card-brightness {
+        grid-column: 2;
+        height: 7.6rem !important;
+      }
+
+      #card-small-appliance {
+        grid-column: 1;
+        height: 22rem !important;
+      }
+
+      #card-lights {
+        grid-column: 2;
+        height: 22rem !important;
+      }
+
+      #card-music {
+        grid-column: 1 / -1;
+        height: auto !important;
+      }
+
+      @media (max-width: 480px) {
+        #main-window {
+          grid-template-columns: 1fr;
+        }
+
+        #card-scene, #card-brightness, #card-small-appliance, #card-lights {
+          grid-column: 1 / -1;
+        }
+
+        #card-music {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .music-art-wrap {
+          width: 100%;
+          height: 18rem;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       SCENE & BACKGROUND ROOM LAYER
+       ======================================================================== -->
+  <div id="stage">
+    <div id="room" class="initial-blur">
+      <img id="room-still" src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005657_e8371ddf-b918-4539-b7c2-07cd5010e4e6.png&w=1920&q=85" alt="Sunlit Room Still">
+      <video id="room-video" autoplay muted loop playsinline poster="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005657_e8371ddf-b918-4539-b7c2-07cd5010e4e6.png&w=1920&q=85">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261118_005751_ccbea518-0364-45d9-8951-be0c8e36bd0a.mp4" type="video/mp4">
+      </video>
+      <div id="room-sun"></div>
+      <div id="room-vignette"></div>
+      <div id="room-dim"></div>
+    </div>
+
+    <!-- ======================================================================
+         SPATIAL 3D UI LAYER
+         ====================================================================== -->
+    <div id="ui-layer">
+
+      <!-- TOP TAB BAR -->
+      <nav id="tab-bar" class="glass intro-hidden">
+        <div class="tab-indicator" id="tab-indicator"></div>
+        <button class="tab-pill" data-room="favorites">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          Favorites
+        </button>
+        <button class="tab-pill active" data-room="living_room">
+          <svg viewBox="0 0 24 24"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"></path><path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0z"></path><path d="M4 18v2"></path><path d="M20 18v2"></path></svg>
+          Living room
+        </button>
+        <button class="tab-pill" data-room="kitchen">
+          <svg viewBox="0 0 24 24"><path d="M18 2v20M14 2v6a3 3 0 0 0 3 3v11"></path><path d="M6 2v7a3 3 0 0 0 3 3v8"></path><path d="M9 2v4"></path><path d="M3 2v4"></path></svg>
+          Kitchen
+        </button>
+        <button class="tab-pill" data-room="bathroom">
+          <svg viewBox="0 0 24 24"><path d="M3 12h18M4 12v5a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-5"></path><path d="M6 8a3 3 0 0 1 6 0v4"></path></svg>
+          Bathroom
+        </button>
+        <button class="tab-pill" data-room="bedroom">
+          <svg viewBox="0 0 24 24"><path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"></path></svg>
+          Bedroom
+        </button>
+        <button class="tab-add-btn" id="btn-add-tab" title="Add device">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </nav>
+
+      <!-- LEFT ICON RAIL -->
+      <aside id="icon-rail" class="glass intro-hidden">
+        <button class="rail-btn" data-panel="home">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span class="rail-tooltip">Home</span>
+        </button>
+        <button class="rail-btn active" data-panel="lighting">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
+          <span class="rail-tooltip">Lighting</span>
+        </button>
+        <button class="rail-btn" data-panel="climate">
+          <svg viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path></svg>
+          <span class="rail-tooltip">Climate</span>
+        </button>
+        <button class="rail-btn" data-panel="security">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span class="rail-tooltip">Security</span>
+        </button>
+        <button class="rail-btn" data-panel="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span class="rail-tooltip">Settings</span>
+        </button>
+      </aside>
+
+      <!-- SPATIAL MAIN WINDOW -->
+      <main id="main-window" class="glass intro-hidden">
+
+        <!-- 6.1 LIVE CAMERA CARD -->
+        <article id="card-camera" class="inner-card card-glass intro-hidden">
+          <div class="cam-feed-box" id="cam-feed-box">
+            <video id="cam-video-el" autoplay muted loop playsinline poster="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005657_e8371ddf-b918-4539-b7c2-07cd5010e4e6.png&w=1920&q=85">
+              <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261118_005751_ccbea518-0364-45d9-8951-be0c8e36bd0a.mp4" type="video/mp4">
+            </video>
+            <img id="cam-img-el" src="" alt="Room CCTV Camera">
+            <div class="cam-scanlines"></div>
+            <div class="cam-gradients"></div>
+            <div class="cam-curtain" id="cam-curtain"></div>
+          </div>
+          <div class="cam-top-row">
+            <div class="cam-live-chip">
+              <div class="cam-live-dot"></div>
+              <span>Live</span>
+            </div>
+            <div class="cam-rec-time" id="cam-rec-clock">REC · 09:41:07</div>
+          </div>
+          <div class="cam-bottom-label" id="cam-room-label">Living room / Live camera</div>
+          <div class="cam-expand-hint" title="Expand camera">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+          </div>
+        </article>
+
+        <!-- 6.2 THERMOSTAT DIAL CARD -->
+        <article id="card-thermostat" class="inner-card card-glass intro-hidden">
+          <div class="dial-header">
+            <div class="dial-title-box">
+              <div class="dial-title" id="dial-device-name">Thermostat · 22°</div>
+              <div class="dial-status-chip">
+                <div class="dial-status-dot" id="dial-dot"></div>
+                <span id="dial-status-label">Cooling</span>
+              </div>
+            </div>
+            <button class="dial-gear-btn" title="Thermostat settings">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+          </div>
+
+          <div class="dial-visual-wrap">
+            <svg class="dial-svg" id="dial-svg" viewBox="0 0 260 260">
+              <defs>
+                <linearGradient id="mintGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#e3fbb0" />
+                  <stop offset="45%" stop-color="#8ef0d6" />
+                  <stop offset="100%" stop-color="#3cc4b4" />
+                </linearGradient>
+              </defs>
+              <!-- 270 deg arc from 135 deg to 45 deg (radius 104, length ~490.09) -->
+              <path class="dial-track" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" />
+              <path class="dial-arc-glow" id="dial-arc-glow" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
+              <path class="dial-arc" id="dial-arc" d="M 56.46 203.54 A 104 104 0 1 1 203.54 203.54" stroke-dasharray="490.09" stroke-dashoffset="245" />
+              <!-- Ticks group rendered dynamically via JS -->
+              <g id="dial-ticks"></g>
+              <circle class="dial-knob" id="dial-knob" cx="130" cy="26" r="12" />
+            </svg>
+            <!-- Center Power Button -->
+            <button class="dial-power-btn" id="dial-power-btn" title="Toggle Power">
+              <svg viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+            </button>
+          </div>
+
+          <div class="dial-bottom-info">
+            <div class="dial-temp-value" id="dial-big-val">22°</div>
+            <div class="dial-sub-target">Target temperature</div>
+          </div>
+        </article>
+
+        <!-- 6.3 SCENE PILL -->
+        <article id="card-scene" class="inner-card card-glass intro-hidden">
+          <div class="scene-left">
+            <div class="scene-icon-circ" id="scene-icon-circ">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </div>
+            <div class="scene-texts">
+              <div class="scene-title" id="scene-name">Morning</div>
+              <div class="scene-tag">Scene</div>
+            </div>
+          </div>
+          <div class="scene-play-btn" title="Trigger scene">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          </div>
+        </article>
+
+        <!-- 6.4 SMALL APPLIANCE CARD -->
+        <article id="card-small-appliance" class="inner-card card-glass intro-hidden">
+          <div class="small-top-row">
+            <div class="small-icons-group">
+              <div class="small-icon-circ" id="small-app-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>
+              </div>
+              <div class="small-icon-circ">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+              </div>
+            </div>
+            <div class="small-status-text" id="small-status-txt">Docked</div>
+          </div>
+          
+          <div class="small-progress-track" id="small-progress-track">
+            <div class="small-progress-bar" id="small-progress-bar"></div>
+          </div>
+
+          <div class="small-bottom-row">
+            <div class="small-labels">
+              <div class="small-title" id="small-app-title">Robot vacuum</div>
+              <div class="small-subline" id="small-app-sub">Docked</div>
+            </div>
+            <div class="spatial-toggle" id="small-toggle" role="switch" aria-checked="false"></div>
+          </div>
+        </article>
+
+        <!-- 6.5 GRADIENT CARD: CEILING LIGHTS -->
+        <article id="card-lights" class="inner-card card-glass on intro-hidden">
+          <div class="lights-top-row">
+            <div class="lights-bulb-circ">
+              <svg id="lights-bulb-svg" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2z"></path></svg>
+            </div>
+            <div class="lights-status-text" id="lights-status-txt">On</div>
+          </div>
+          <div class="lights-bottom-row">
+            <div class="lights-labels">
+              <div class="lights-title" id="lights-title-txt">Ceiling lights</div>
+              <div class="lights-state" id="lights-subline-txt">On · 72%</div>
+            </div>
+            <div class="spatial-toggle active" id="lights-toggle" role="switch" aria-checked="true"></div>
+          </div>
+        </article>
+
+        <!-- 6.6 BRIGHTNESS SLIDER -->
+        <article id="card-brightness" class="inner-card card-glass intro-hidden">
+          <div class="slider-track-fill" id="slider-fill"></div>
+          <div class="slider-content">
+            <div class="slider-sun-icon" id="slider-sun">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </div>
+            <div class="slider-pct" id="slider-val">72%</div>
+          </div>
+        </article>
+
+        <!-- 6.7 MUSIC PLAYER -->
+        <article id="card-music" class="inner-card card-glass intro-hidden">
+          <div class="music-art-wrap">
+            <img class="music-art-img" id="music-art" src="https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_8b53b6f2-a379-434c-9c37-3766a3c6ae3f.png&w=400&q=85" alt="Album Art">
+          </div>
+          <div class="music-right">
+            <div class="music-top-line">
+              <div class="now-playing-chip" id="now-playing-chip">
+                <span class="music-note-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                </span>
+                <span>Now Playing</span>
+                <div class="equalizer-bars playing" id="eq-bars">
+                  <div class="eq-bar"></div>
+                  <div class="eq-bar"></div>
+                  <div class="eq-bar"></div>
+                </div>
+              </div>
+              <div class="music-time-display" id="music-time">1:12 / 3:24</div>
+            </div>
+
+            <div class="music-titles-box" id="music-titles-box">
+              <div class="music-song-title" id="music-title">Slow Bloom</div>
+              <div class="music-artist-name" id="music-artist">Nami</div>
+            </div>
+
+            <div class="music-seek-bar" id="music-seek-bar">
+              <div class="music-seek-fill" id="music-seek-fill"></div>
+            </div>
+
+            <div class="music-controls-row">
+              <button class="music-btn" id="music-prev" title="Previous Track">
+                <svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+              </button>
+              <button class="music-play-pause-btn" id="music-play-btn" title="Play/Pause">
+                <svg id="music-play-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+              </button>
+              <button class="music-btn" id="music-next" title="Next Track">
+                <svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+              </button>
+            </div>
+          </div>
+        </article>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       TOAST NOTIFICATION
+       ======================================================================== -->
+  <div id="spatial-toast">
+    <div class="toast-check-circ">
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+    <span id="toast-text">Morning scene · lights 86%, 22°, music on</span>
+  </div>
+
+  <!-- ?rec mode frosted cursor circle -->
+  <div id="rec-cursor"></div>
+
+  <!-- ========================================================================
+       JAVASCRIPT LOGIC & INTERACTIONS
+       ======================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ------------------------------------------------------------------------
+      // DATA DICTIONARIES
+      // ------------------------------------------------------------------------
+      const ROOM_DATA = {
+        living_room: {
+          name: "Living room",
+          feedType: "video",
+          dialName: "Thermostat",
+          dialVal: 22,
+          dialMin: 16,
+          dialMax: 30,
+          dialUnit: "°",
+          dialStatus: "Cooling",
+          dialDotColor: "mint",
+          sceneName: "Morning",
+          smallName: "Robot vacuum",
+          smallStatus: "Docked",
+          smallSub: "Docked",
+          smallIcon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>`,
+          lightsName: "Ceiling lights"
+        },
+        kitchen: {
+          name: "Kitchen",
+          feedType: "image",
+          feedUrl: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_23f1bd6a-f11f-492b-99af-c726f290bb4e.png&w=1100&q=85",
+          dialName: "Oven",
+          dialVal: 180,
+          dialMin: 50,
+          dialMax: 250,
+          dialUnit: "°",
+          dialStatus: "Preheating",
+          dialDotColor: "orange",
+          sceneName: "Breakfast",
+          smallName: "Dishwasher",
+          smallStatus: "Idle",
+          smallSub: "Idle",
+          smallIcon: `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="12" cy="12" r="4"></circle><line x1="8" y1="7" x2="8.01" y2="7"></line></svg>`,
+          lightsName: "Pendant lights"
+        },
+        bathroom: {
+          name: "Bathroom",
+          feedType: "image",
+          feedUrl: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_c18141e3-13e9-4ca0-b182-094207ea14b2.png&w=1100&q=85",
+          dialName: "Floor heat",
+          dialVal: 26,
+          dialMin: 18,
+          dialMax: 34,
+          dialUnit: "°",
+          dialStatus: "Warming",
+          dialDotColor: "mint",
+          sceneName: "Spa",
+          smallName: "Towel warmer",
+          smallStatus: "Off",
+          smallSub: "Off",
+          smallIcon: `<svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"></path><path d="M4 10h16M4 15h16"></path></svg>`,
+          lightsName: "Mirror light"
+        },
+        bedroom: {
+          name: "Bedroom",
+          feedType: "image",
+          feedUrl: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005652_b7c02446-6122-4a60-bf93-2f968214b55e.png&w=1100&q=85",
+          dialName: "Thermostat",
+          dialVal: 19,
+          dialMin: 15,
+          dialMax: 26,
+          dialUnit: "°",
+          dialStatus: "Cooling",
+          dialDotColor: "mint",
+          sceneName: "Wind down",
+          smallName: "Air purifier",
+          smallStatus: "Standby",
+          smallSub: "Standby",
+          smallIcon: `<svg viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>`,
+          lightsName: "Bedside lamps"
+        },
+        favorites: {
+          name: "Favorites",
+          feedType: "video",
+          dialName: "Thermostat",
+          dialVal: 22,
+          dialMin: 16,
+          dialMax: 30,
+          dialUnit: "°",
+          dialStatus: "Cooling",
+          dialDotColor: "mint",
+          sceneName: "Morning",
+          smallName: "Robot vacuum",
+          smallStatus: "Docked",
+          smallSub: "Docked",
+          smallIcon: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path><path d="M9 16h6"></path></svg>`,
+          lightsName: "Ceiling lights"
+        }
+      };
+
+      const PLAYLIST = [
+        {
+          title: "Slow Bloom",
+          artist: "Nami",
+          art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_8b53b6f2-a379-434c-9c37-3766a3c6ae3f.png&w=400&q=85",
+          duration: 204 // 3:24
+        },
+        {
+          title: "Sea Glass",
+          artist: "Oda Marin",
+          art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_bd9be7e9-7cc8-4336-9688-ba74f5a13e75.png&w=400&q=85",
+          duration: 188 // 3:08
+        },
+        {
+          title: "Fern Light",
+          artist: "Juniper",
+          art: "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20261118_005653_60c08159-38f9-4ed3-a13d-e9c65cee4f7b.png&w=400&q=85",
+          duration: 226 // 3:46
+        }
+      ];
+
+      // ------------------------------------------------------------------------
+      // GLOBAL STATE
+      // ------------------------------------------------------------------------
+      let currentRoomKey = "living_room";
+      let brightness = 72;
+      let lightsOn = true;
+      let dialOn = true;
+      let currentDialVal = 22;
+      let targetDialVal = 22;
+      let dialDragging = false;
+      let dialAnimFrame = null;
+      let dialPointerId = null;
+
+      let vacuumActive = false;
+      let vacuumProgress = 0;
+      let vacuumInterval = null;
+
+      let currentTrackIdx = 0;
+      let isPlaying = true;
+      let trackCurrentTime = 72; // 1:12
+      let musicTicker = null;
+
+      let toastTimer = null;
+
+      // Parallax state
+      let mouseX = 0, mouseY = 0;
+      let targetSx = 0, targetSy = 0;
+      let currentSx = 0, currentSy = 0;
+
+      // DOM Elements
+      const stage = document.getElementById('stage');
+      const room = document.getElementById('room');
+      const roomDim = document.getElementById('room-dim');
+      const roomSun = document.getElementById('room-sun');
+      const uiLayer = document.getElementById('ui-layer');
+      const tabBar = document.getElementById('tab-bar');
+      const tabIndicator = document.getElementById('tab-indicator');
+      const iconRail = document.getElementById('icon-rail');
+      const mainWindow = document.getElementById('main-window');
+      const innerCards = document.querySelectorAll('.inner-card');
+
+      // Camera elements
+      const cardCamera = document.getElementById('card-camera');
+      const camVideoEl = document.getElementById('cam-video-el');
+      const camImgEl = document.getElementById('cam-img-el');
+      const camFeedBox = document.getElementById('cam-feed-box');
+      const camCurtain = document.getElementById('cam-curtain');
+      const camRecClock = document.getElementById('cam-rec-clock');
+      const camRoomLabel = document.getElementById('cam-room-label');
+
+      // Thermostat elements
+      const cardThermostat = document.getElementById('card-thermostat');
+      const dialDeviceName = document.getElementById('dial-device-name');
+      const dialDot = document.getElementById('dial-dot');
+      const dialStatusLabel = document.getElementById('dial-status-label');
+      const dialSvg = document.getElementById('dial-svg');
+      const dialArc = document.getElementById('dial-arc');
+      const dialArcGlow = document.getElementById('dial-arc-glow');
+      const dialTicksGroup = document.getElementById('dial-ticks');
+      const dialKnob = document.getElementById('dial-knob');
+      const dialPowerBtn = document.getElementById('dial-power-btn');
+      const dialBigVal = document.getElementById('dial-big-val');
+
+      // Scene elements
+      const cardScene = document.getElementById('card-scene');
+      const sceneIconCirc = document.getElementById('scene-icon-circ');
+      const sceneName = document.getElementById('scene-name');
+
+      // Small appliance elements
+      const cardSmallApp = document.getElementById('card-small-appliance');
+      const smallAppIcon = document.getElementById('small-app-icon');
+      const smallStatusTxt = document.getElementById('small-status-txt');
+      const smallAppTitle = document.getElementById('small-app-title');
+      const smallAppSub = document.getElementById('small-app-sub');
+      const smallToggle = document.getElementById('small-toggle');
+      const smallProgressTrack = document.getElementById('small-progress-track');
+      const smallProgressBar = document.getElementById('small-progress-bar');
+
+      // Lights elements
+      const cardLights = document.getElementById('card-lights');
+      const lightsBulbSvg = document.getElementById('lights-bulb-svg');
+      const lightsStatusTxt = document.getElementById('lights-status-txt');
+      const lightsTitleTxt = document.getElementById('lights-title-txt');
+      const lightsSublineTxt = document.getElementById('lights-subline-txt');
+      const lightsToggle = document.getElementById('lights-toggle');
+
+      // Brightness elements
+      const cardBrightness = document.getElementById('card-brightness');
+      const sliderFill = document.getElementById('slider-fill');
+      const sliderSun = document.getElementById('slider-sun');
+      const sliderVal = document.getElementById('slider-val');
+
+      // Music elements
+      const cardMusic = document.getElementById('card-music');
+      const musicArt = document.getElementById('music-art');
+      const nowPlayingChip = document.getElementById('now-playing-chip');
+      const eqBars = document.getElementById('eq-bars');
+      const musicTime = document.getElementById('music-time');
+      const musicTitlesBox = document.getElementById('music-titles-box');
+      const musicTitle = document.getElementById('music-title');
+      const musicArtist = document.getElementById('music-artist');
+      const musicSeekFill = document.getElementById('music-seek-fill');
+      const musicSeekBar = document.getElementById('music-seek-bar');
+      const musicPrevBtn = document.getElementById('music-prev');
+      const musicPlayBtn = document.getElementById('music-play-btn');
+      const musicPlayIcon = document.getElementById('music-play-icon');
+      const musicNextBtn = document.getElementById('music-next');
+
+      // Toast & rec
+      const spatialToast = document.getElementById('spatial-toast');
+      const toastText = document.getElementById('toast-text');
+      const recCursor = document.getElementById('rec-cursor');
+
+      // ------------------------------------------------------------------------
+      // 1. TOAST NOTIFICATION UTILITY
+      // ------------------------------------------------------------------------
+      function showToast(message) {
+        toastText.textContent = message;
+        spatialToast.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          spatialToast.classList.remove('show');
+        }, 2400);
+      }
+
+      // ------------------------------------------------------------------------
+      // 2. REC CLOCK
+      // ------------------------------------------------------------------------
+      function updateRecClock() {
+        const d = new Date();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        camRecClock.textContent = `REC · ${hh}:${mm}:${ss}`;
+      }
+      setInterval(updateRecClock, 1000);
+      updateRecClock();
+
+      // ------------------------------------------------------------------------
+      // 3. TAB BAR INDICATOR & ROOM SWITCHING
+      // ------------------------------------------------------------------------
+      function updateTabIndicator(activeTabEl) {
+        if (!activeTabEl) return;
+        const barRect = tabBar.getBoundingClientRect();
+        const tabRect = activeTabEl.getBoundingClientRect();
+        const left = tabRect.left - barRect.left;
+        const width = tabRect.width;
+        tabIndicator.style.left = `${left}px`;
+        tabIndicator.style.width = `${width}px`;
+      }
+
+      function switchRoom(roomKey) {
+        if (!ROOM_DATA[roomKey]) return;
+        currentRoomKey = roomKey;
+        const rData = ROOM_DATA[roomKey];
+
+        // 1. Dip cards
+        innerCards.forEach(c => c.classList.add('room-dip'));
+        setTimeout(() => {
+          innerCards.forEach(c => c.classList.remove('room-dip'));
+        }, 350);
+
+        // 2. Camera wipe curtain animation
+        camCurtain.classList.remove('wiping-out');
+        camCurtain.classList.add('wiping-in');
+
+        setTimeout(() => {
+          if (rData.feedType === "video") {
+            camVideoEl.style.display = "block";
+            camImgEl.style.display = "none";
+            camFeedBox.classList.remove('kenburns');
+          } else {
+            camVideoEl.style.display = "none";
+            camImgEl.style.display = "block";
+            camImgEl.src = rData.feedUrl;
+            camFeedBox.classList.add('kenburns');
+          }
+          camRoomLabel.textContent = `${rData.name} / Live camera`;
+
+          camCurtain.classList.remove('wiping-in');
+          camCurtain.classList.add('wiping-out');
+        }, 450);
+
+        // 3. Roll titles in and out
+        musicTitlesBox.classList.add('roll');
+        setTimeout(() => musicTitlesBox.classList.remove('roll'), 350);
+
+        // 4. Update data on cards
+        dialDeviceName.textContent = `${rData.dialName} · ${rData.dialVal}${rData.dialUnit}`;
+        dialStatusLabel.textContent = rData.dialStatus;
+        dialDot.className = `dial-status-dot ${rData.dialDotColor}`;
+        sceneName.textContent = rData.sceneName;
+
+        smallAppTitle.textContent = rData.smallName;
+        smallAppSub.textContent = rData.smallSub;
+        smallStatusTxt.textContent = rData.smallStatus;
+        smallAppIcon.innerHTML = rData.smallIcon;
+
+        // Reset vacuum/small appliance progress if switched
+        if (vacuumInterval) clearInterval(vacuumInterval);
+        vacuumActive = false;
+        smallToggle.classList.remove('active');
+        smallAppIcon.classList.remove('spinning');
+        smallProgressTrack.classList.remove('visible');
+        smallProgressBar.style.width = '0%';
+
+        lightsTitleTxt.textContent = rData.lightsName;
+        lightsSublineTxt.textContent = `${lightsOn ? 'On' : 'Off'} · ${brightness}%`;
+
+        // 5. Dial re-animate to room value
+        targetDialVal = rData.dialVal;
+        animateDialTo(targetDialVal);
+
+        showToast(`${rData.name} selected`);
+      }
+
+      const tabs = tabBar.querySelectorAll('.tab-pill');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          updateTabIndicator(tab);
+          switchRoom(tab.dataset.room);
+        });
+      });
+
+      // '+' button rotates 90deg on hover (CSS handled) and pops toast on click
+      document.getElementById('btn-add-tab').addEventListener('click', () => {
+        showToast("New automation or device tile added");
+      });
+
+      // ------------------------------------------------------------------------
+      // 4. ICON RAIL INTERACTION
+      // ------------------------------------------------------------------------
+      const railButtons = iconRail.querySelectorAll('.rail-btn');
+      railButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          railButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const panelName = btn.dataset.panel;
+          showToast(`${panelName.charAt(0).toUpperCase() + panelName.slice(1)} view`);
+        });
+      });
+
+      // ------------------------------------------------------------------------
+      // 5. CAMERA EXPAND / DOCK TOGGLE
+      // ------------------------------------------------------------------------
+      cardCamera.addEventListener('click', (e) => {
+        cardCamera.classList.toggle('expanded');
+      });
+
+      // ------------------------------------------------------------------------
+      // 6. THERMOSTAT DIAL (270 DEG SWEEP & TICKS)
+      // ------------------------------------------------------------------------
+      const TOTAL_ARC_LENGTH = 490.09;
+      const RADIUS = 104;
+      const CENTER_X = 130;
+      const CENTER_Y = 130;
+      const NUM_TICKS = 31;
+
+      // Generate 31 ticks inside the SVG dial
+      function buildDialTicks() {
+        dialTicksGroup.innerHTML = '';
+        for (let i = 0; i < NUM_TICKS; i++) {
+          const frac = i / (NUM_TICKS - 1);
+          // Angle from 135 deg to 405 deg (45 deg)
+          const angleDeg = 135 + frac * 270;
+          const rad = (angleDeg * Math.PI) / 180;
+          const isMajor = (i % 5 === 0);
+          const rOuter = 88;
+          const rInner = isMajor ? 75 : 81;
+
+          const x1 = CENTER_X + rOuter * Math.cos(rad);
+          const y1 = CENTER_Y + rOuter * Math.sin(rad);
+          const x2 = CENTER_X + rInner * Math.cos(rad);
+          const y2 = CENTER_Y + rInner * Math.sin(rad);
+
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', x1.toFixed(2));
+          line.setAttribute('y1', y1.toFixed(2));
+          line.setAttribute('x2', x2.toFixed(2));
+          line.setAttribute('y2', y2.toFixed(2));
+          line.setAttribute('stroke', 'rgba(255,255,255,0.2)');
+          line.setAttribute('stroke-width', isMajor ? '2.5' : '1.5');
+          line.setAttribute('stroke-linecap', 'round');
+          line.dataset.idx = i;
+          dialTicksGroup.appendChild(line);
+        }
+      }
+      buildDialTicks();
+
+      function updateDialUI(val, updateText = true) {
+        const rData = ROOM_DATA[currentRoomKey];
+        const min = rData.dialMin;
+        const max = rData.dialMax;
+        const frac = Math.max(0, Math.min(1, (val - min) / (max - min)));
+
+        // Offset: when frac = 0, offset = TOTAL_ARC_LENGTH; when frac = 1, offset = 0
+        const offset = TOTAL_ARC_LENGTH * (1 - frac);
+        dialArc.style.strokeDashoffset = offset;
+        dialArcGlow.style.strokeDashoffset = offset;
+
+        // Knob position
+        const angleDeg = 135 + frac * 270;
+        const rad = (angleDeg * Math.PI) / 180;
+        const kx = CENTER_X + RADIUS * Math.cos(rad);
+        const ky = CENTER_Y + RADIUS * Math.sin(rad);
+        dialKnob.setAttribute('cx', kx.toFixed(2));
+        dialKnob.setAttribute('cy', ky.toFixed(2));
+
+        // Update tick lights
+        const tickThreshold = frac * (NUM_TICKS - 1);
+        const ticks = dialTicksGroup.querySelectorAll('line');
+        ticks.forEach((t, idx) => {
+          if (idx <= tickThreshold) {
+            t.setAttribute('stroke', '#ffffff');
+          } else {
+            t.setAttribute('stroke', 'rgba(255,255,255,0.2)');
+          }
+        });
+
+        if (updateText) {
+          const displayVal = Math.round(val);
+          dialBigVal.textContent = `${displayVal}${rData.dialUnit}`;
+          dialDeviceName.textContent = `${rData.dialName} · ${displayVal}${rData.dialUnit}`;
+        }
+      }
+
+      function animateDialTo(targetVal) {
+        if (dialAnimFrame) cancelAnimationFrame(dialAnimFrame);
+        const startVal = currentDialVal;
+        const duration = 700; // ms
+        const startTime = performance.now();
+
+        function step(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          // Ease out cubic
+          const easeProgress = 1 - Math.pow(1 - progress, 3);
+          currentDialVal = startVal + (targetVal - startVal) * easeProgress;
+          updateDialUI(currentDialVal, true);
+          if (progress < 1) {
+            dialAnimFrame = requestAnimationFrame(step);
+          } else {
+            currentDialVal = targetVal;
+            updateDialUI(currentDialVal, true);
+          }
+        }
+        dialAnimFrame = requestAnimationFrame(step);
+      }
+
+      function getDialValFromPointer(e) {
+        const rect = dialSvg.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
+
+        // Angle in degrees from center (0 deg is East, 90 is South)
+        let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+        // Normalize angle to 0..360
+        if (angle < 0) angle += 360;
+
+        // Sweep goes from 135 deg through 270 (top), 0, up to 45 deg
+        // The bottom gap is between 45 deg and 135 deg
+        let frac;
+        if (angle >= 135) {
+          frac = (angle - 135) / 270;
+        } else if (angle <= 45) {
+          frac = (angle + 360 - 135) / 270;
+        } else {
+          // Inside 45..135 gap, clamp to nearest side
+          frac = (angle - 45 < 135 - angle) ? 1 : 0;
+        }
+        frac = Math.max(0, Math.min(1, frac));
+
+        const rData = ROOM_DATA[currentRoomKey];
+        return rData.dialMin + frac * (rData.dialMax - rData.dialMin);
+      }
+
+      dialSvg.addEventListener('pointerdown', (e) => {
+        if (!dialOn) return;
+        dialDragging = true;
+        dialPointerId = e.pointerId;
+        dialSvg.setPointerCapture(e.pointerId);
+        currentDialVal = getDialValFromPointer(e);
+        updateDialUI(currentDialVal, true);
+      });
+
+      dialSvg.addEventListener('pointermove', (e) => {
+        if (!dialDragging || !dialOn) return;
+        currentDialVal = getDialValFromPointer(e);
+        updateDialUI(currentDialVal, true);
+      });
+
+      function stopDialDrag(e) {
+        if (dialDragging) {
+          dialDragging = false;
+          try { dialSvg.releasePointerCapture(e.pointerId); } catch(err) {}
+          const rData = ROOM_DATA[currentRoomKey];
+          const finalVal = Math.round(currentDialVal);
+          rData.dialVal = finalVal;
+          showToast(`${rData.dialName} set to ${finalVal}${rData.dialUnit}`);
+        }
+      }
+
+      dialSvg.addEventListener('pointerup', stopDialDrag);
+      dialSvg.addEventListener('pointercancel', stopDialDrag);
+
+      // Thermostat Power Button
+      dialPowerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dialOn = !dialOn;
+        if (dialOn) {
+          dialPowerBtn.classList.remove('off');
+          dialSvg.classList.remove('off-mode');
+          dialStatusLabel.textContent = ROOM_DATA[currentRoomKey].dialStatus;
+          dialDot.className = `dial-status-dot ${ROOM_DATA[currentRoomKey].dialDotColor}`;
+          showToast(`${ROOM_DATA[currentRoomKey].dialName} turned ON`);
+        } else {
+          dialPowerBtn.classList.add('off');
+          dialSvg.classList.add('off-mode');
+          dialStatusLabel.textContent = "Off";
+          dialDot.className = "dial-status-dot grey";
+          showToast(`${ROOM_DATA[currentRoomKey].dialName} turned OFF`);
+        }
+      });
+
+      // ------------------------------------------------------------------------
+      // 7. SCENE PILL INTERACTION (MORNING / SCENE)
+      // ------------------------------------------------------------------------
+      cardScene.addEventListener('click', (e) => {
+        // 1. Lime ripple effect
+        const rect = cardScene.getBoundingClientRect();
+        const ripple = document.createElement('div');
+        ripple.className = 'scene-ripple';
+        const size = Math.max(rect.width, rect.height) * 2;
+        ripple.style.width = ripple.style.height = `${size}px`;
+        ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+        ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+        cardScene.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 1200);
+
+        // 2. Sun icon spins for 2.4s
+        sceneIconCirc.classList.add('spinning');
+        setTimeout(() => sceneIconCirc.classList.remove('spinning'), 2400);
+
+        // 3. Lights turn ON and brightness eases to 86%
+        if (!lightsOn) toggleLights(true);
+        setBrightness(86);
+
+        // 4. Thermostat goes to 22°
+        targetDialVal = 22;
+        animateDialTo(targetDialVal);
+
+        // 5. Music starts
+        if (!isPlaying) toggleMusicPlay();
+
+        // 6. Toast
+        showToast("Morning scene · lights 86%, 22°, music on");
+      });
+
+      // ------------------------------------------------------------------------
+      // 8. SMALL APPLIANCE (ROBOT VACUUM / TOWEL / DISHWASHER)
+      // ------------------------------------------------------------------------
+      smallToggle.addEventListener('click', () => {
+        vacuumActive = !vacuumActive;
+        const rData = ROOM_DATA[currentRoomKey];
+        if (vacuumActive) {
+          smallToggle.classList.add('active');
+          smallAppIcon.classList.add('spinning');
+          smallProgressTrack.classList.add('visible');
+          vacuumProgress = 0;
+          smallProgressBar.style.width = '0%';
+          smallStatusTxt.textContent = "Cleaning · 0% done";
+          smallAppSub.textContent = "Cleaning · 0% done";
+
+          if (vacuumInterval) clearInterval(vacuumInterval);
+          vacuumInterval = setInterval(() => {
+            vacuumProgress += 2;
+            if (vacuumProgress > 100) vacuumProgress = 100;
+            smallProgressBar.style.width = `${vacuumProgress}%`;
+            smallStatusTxt.textContent = `Cleaning · ${vacuumProgress}% done`;
+            smallAppSub.textContent = `Cleaning · ${vacuumProgress}% done`;
+
+            if (vacuumProgress >= 100) {
+              clearInterval(vacuumInterval);
+              vacuumActive = false;
+              smallToggle.classList.remove('active');
+              smallAppIcon.classList.remove('spinning');
+              smallProgressTrack.classList.remove('visible');
+              smallStatusTxt.textContent = "Docked";
+              smallAppSub.textContent = "Docked";
+              showToast("Robot vacuum finished cycle · Docked");
+            }
+          }, 1000);
+
+          showToast("Robot vacuum started cleaning");
+        } else {
+          if (vacuumInterval) clearInterval(vacuumInterval);
+          smallToggle.classList.remove('active');
+          smallAppIcon.classList.remove('spinning');
+          smallProgressTrack.classList.remove('visible');
+          smallProgressBar.style.width = '0%';
+          smallStatusTxt.textContent = "Docked";
+          smallAppSub.textContent = "Docked";
+          showToast("Robot vacuum docked");
+        }
+      });
+
+      // ------------------------------------------------------------------------
+      // 9. CEILING LIGHTS & BRIGHTNESS SLIDER (ROOM DIMS LIVE!)
+      // ------------------------------------------------------------------------
+      function updateRoomAtmosphere() {
+        if (lightsOn) {
+          // Dim layer: (100 - brightness)/100 * 0.28
+          const dimOpacity = ((100 - brightness) / 100) * 0.28;
+          roomDim.style.opacity = dimOpacity.toFixed(4);
+          // Sun glow follows brightness
+          roomSun.style.opacity = (brightness / 100).toFixed(4);
+          // Bulb glow strength
+          const glowAlpha = (brightness / 100) * 0.8;
+          lightsBulbSvg.style.filter = `drop-shadow(0 0 ${10 + (brightness / 100) * 16}px rgba(255, 240, 180, ${glowAlpha}))`;
+        } else {
+          // Lights off: dim layer is 0.32, sun glow is 0.15
+          roomDim.style.opacity = '0.32';
+          roomSun.style.opacity = '0.15';
+          lightsBulbSvg.style.filter = 'none';
+        }
+      }
+
+      function setBrightness(val) {
+        brightness = Math.max(1, Math.min(100, Math.round(val)));
+        sliderFill.style.width = `${Math.max(18, brightness)}%`;
+        sliderVal.textContent = `${brightness}%`;
+        lightsSublineTxt.textContent = `${lightsOn ? 'On' : 'Off'} · ${brightness}%`;
+        updateRoomAtmosphere();
+      }
+
+      function toggleLights(forceState = null) {
+        lightsOn = (forceState !== null) ? forceState : !lightsOn;
+        if (lightsOn) {
+          cardLights.classList.add('on');
+          lightsToggle.classList.add('active');
+          lightsStatusTxt.textContent = 'On';
+          lightsSublineTxt.textContent = `On · ${brightness}%`;
+          cardBrightness.classList.remove('disabled');
+          showToast(`${ROOM_DATA[currentRoomKey].lightsName} turned ON`);
+        } else {
+          cardLights.classList.remove('on');
+          lightsToggle.classList.remove('active');
+          lightsStatusTxt.textContent = 'Off';
+          lightsSublineTxt.textContent = `Off · ${brightness}%`;
+          cardBrightness.classList.add('disabled');
+          showToast(`${ROOM_DATA[currentRoomKey].lightsName} turned OFF`);
+        }
+        updateRoomAtmosphere();
+      }
+
+      lightsToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLights();
+      });
+
+      // Brightness Slider Dragging with live room dimming
+      let sliderDragging = false;
+      let sliderPointerId = null;
+
+      function updateSliderFromEvent(e) {
+        const rect = cardBrightness.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const frac = Math.max(0, Math.min(1, offsetX / rect.width));
+        const newPct = Math.round(frac * 99) + 1; // 1 to 100
+        setBrightness(newPct);
+        sliderSun.style.transform = `rotate(${frac * 360}deg)`;
+      }
+
+      cardBrightness.addEventListener('pointerdown', (e) => {
+        if (!lightsOn) return;
+        sliderDragging = true;
+        sliderPointerId = e.pointerId;
+        cardBrightness.setPointerCapture(e.pointerId);
+        updateSliderFromEvent(e);
+      });
+
+      cardBrightness.addEventListener('pointermove', (e) => {
+        if (!sliderDragging || !lightsOn) return;
+        updateSliderFromEvent(e);
+      });
+
+      function stopSliderDrag(e) {
+        if (sliderDragging) {
+          sliderDragging = false;
+          try { cardBrightness.releasePointerCapture(e.pointerId); } catch(err) {}
+          showToast(`Brightness set to ${brightness}%`);
+        }
+      }
+
+      cardBrightness.addEventListener('pointerup', stopSliderDrag);
+      cardBrightness.addEventListener('pointercancel', stopSliderDrag);
+
+      // ------------------------------------------------------------------------
+      // 10. MUSIC PLAYER
+      // ------------------------------------------------------------------------
+      function formatTime(secs) {
+        const m = Math.floor(secs / 60);
+        const s = Math.floor(secs % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+      }
+
+      function updateMusicUI() {
+        const track = PLAYLIST[currentTrackIdx];
+        musicTitle.textContent = track.title;
+        musicArtist.textContent = track.artist;
+        musicTime.textContent = `${formatTime(trackCurrentTime)} / ${formatTime(track.duration)}`;
+        const pct = (trackCurrentTime / track.duration) * 100;
+        musicSeekFill.style.width = `${pct}%`;
+
+        // Update Equalizer
+        if (isPlaying) {
+          eqBars.classList.add('playing');
+          musicPlayIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
+        } else {
+          eqBars.classList.remove('playing');
+          musicPlayIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
+        }
+      }
+
+      function switchTrack(newIdx) {
+        currentTrackIdx = (newIdx + PLAYLIST.length) % PLAYLIST.length;
+        trackCurrentTime = 0;
+        const track = PLAYLIST[currentTrackIdx];
+
+        // Wipe album image
+        musicArt.classList.remove('wipe');
+        void musicArt.offsetWidth; // trigger reflow
+        musicArt.src = track.art;
+        musicArt.classList.add('wipe');
+
+        // Roll titles
+        musicTitlesBox.classList.add('roll');
+        setTimeout(() => {
+          updateMusicUI();
+          musicTitlesBox.classList.remove('roll');
+        }, 250);
+
+        showToast(`Playing "${track.title}" by ${track.artist}`);
+      }
+
+      function toggleMusicPlay() {
+        isPlaying = !isPlaying;
+        updateMusicUI();
+        showToast(isPlaying ? "Music resumed" : "Music paused");
+      }
+
+      musicPlayBtn.addEventListener('click', toggleMusicPlay);
+
+      musicNextBtn.addEventListener('click', () => {
+        switchTrack(currentTrackIdx + 1);
+      });
+
+      musicPrevBtn.addEventListener('click', () => {
+        // If > 5 seconds in, restart track
+        if (trackCurrentTime > 5) {
+          trackCurrentTime = 0;
+          updateMusicUI();
+          showToast("Restarted track");
+        } else {
+          switchTrack(currentTrackIdx - 1);
+        }
+      });
+
+      // Clickable progress bar
+      musicSeekBar.addEventListener('click', (e) => {
+        const rect = musicSeekBar.getBoundingClientRect();
+        const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        trackCurrentTime = Math.round(frac * PLAYLIST[currentTrackIdx].duration);
+        updateMusicUI();
+      });
+
+      // Music timer ticking every second
+      musicTicker = setInterval(() => {
+        if (!isPlaying) return;
+        trackCurrentTime++;
+        if (trackCurrentTime >= PLAYLIST[currentTrackIdx].duration) {
+          switchTrack(currentTrackIdx + 1);
+        } else {
+          updateMusicUI();
+        }
+      }, 1000);
+      updateMusicUI();
+
+      // ------------------------------------------------------------------------
+      // 11. 3D PARALLAX EFFECT WITH MOUSE (LERP .05)
+      // ------------------------------------------------------------------------
+      window.addEventListener('mousemove', (e) => {
+        // Normalized coordinates from center (-1 to +1)
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        targetSx = (e.clientX / window.innerWidth) * 2 - 1;
+        targetSy = (e.clientY / window.innerHeight) * 2 - 1;
+      });
+
+      function renderParallax() {
+        // Check if desktop (width > 900)
+        if (window.innerWidth > 900) {
+          currentSx += (targetSx - currentSx) * 0.05;
+          currentSy += (targetSy - currentSy) * 0.05;
+
+          // Room parallax: scale(1.04) translate(sx * 18px, sy * 12px)
+          const roomTx = (currentSx * 18).toFixed(2);
+          const roomTy = (currentSy * 12).toFixed(2);
+          room.style.transform = `scale(1.04) translate(${roomTx}px, ${roomTy}px)`;
+
+          // UI layer rotate and translate
+          const rotY = (currentSx * 4).toFixed(2);
+          const rotX = (-currentSy * 3).toFixed(2);
+          const uiTx = (currentSx * -14).toFixed(2);
+          const uiTy = (currentSy * -10).toFixed(2);
+          uiLayer.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg) translate(${uiTx}px, ${uiTy}px)`;
+        } else {
+          room.style.transform = '';
+          uiLayer.style.transform = '';
+        }
+
+        // ?rec cursor position follow
+        if (recCursor.classList.contains('active')) {
+          recCursor.style.left = `${mouseX}px`;
+          recCursor.style.top = `${mouseY}px`;
+        }
+
+        requestAnimationFrame(renderParallax);
+      }
+      renderParallax();
+
+      // ------------------------------------------------------------------------
+      // 12. ?rec MODE CUSTOM FROSTED CURSOR
+      // ------------------------------------------------------------------------
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('rec')) {
+        recCursor.classList.add('active');
+        document.body.style.cursor = 'none';
+
+        window.addEventListener('mousedown', () => recCursor.classList.add('pressed'));
+        window.addEventListener('mouseup', () => recCursor.classList.remove('pressed'));
+
+        const interactiveEls = document.querySelectorAll('button, .tab-pill, .rail-btn, .spatial-toggle, #card-camera, #card-scene, #card-brightness, .music-seek-bar');
+        interactiveEls.forEach(el => {
+          el.addEventListener('mouseenter', () => recCursor.classList.add('hover'));
+          el.addEventListener('mouseleave', () => recCursor.classList.remove('hover'));
+        });
+      }
+
+      // ------------------------------------------------------------------------
+      // 13. STAGGERED INTRO ANIMATION SEQUENCE
+      // ------------------------------------------------------------------------
+      window.addEventListener('DOMContentLoaded', () => {
+        // Initial tab indicator placement
+        const initialActiveTab = tabBar.querySelector('.tab-pill.active');
+        updateTabIndicator(initialActiveTab);
+
+        // Step 1: Un-blur room (100ms)
+        setTimeout(() => {
+          room.classList.remove('initial-blur');
+        }, 150);
+
+        // Step 2: Window flies forward (300ms)
+        setTimeout(() => {
+          mainWindow.classList.remove('intro-hidden');
+        }, 350);
+
+        // Step 3: Tab bar drops in (550ms)
+        setTimeout(() => {
+          tabBar.classList.remove('intro-hidden');
+          updateTabIndicator(initialActiveTab);
+        }, 550);
+
+        // Step 4: Left rail slides in (700ms)
+        setTimeout(() => {
+          iconRail.classList.remove('intro-hidden');
+        }, 700);
+
+        // Step 5: Cards rise and un-blur in stagger
+        innerCards.forEach((card, idx) => {
+          setTimeout(() => {
+            card.classList.remove('intro-hidden');
+          }, 850 + idx * 110);
+        });
+
+        // Step 6: Dial sweeps from 16 to 22, brightness fills to 72%
+        setTimeout(() => {
+          currentDialVal = 16;
+          animateDialTo(22);
+          setBrightness(72);
+        }, 1600);
+      });
+
+      // Resize listener for responsive tab indicator
+      window.addEventListener('resize', () => {
+        const activeTab = tabBar.querySelector('.tab-pill.active');
+        updateTabIndicator(activeTab);
+      });
+
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+# ==============================================================================
+# Home Assistant Core Configuration
+# Project: Home Automation System | Python, IoT & Home Assistant
+# ==============================================================================
+
+default_config:
+
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+# ------------------------------------------------------------------------------
+# System State Booleans (Control Modes)
+# ------------------------------------------------------------------------------
+input_boolean:
+  automation_mode:
+    name: "Automatic Mode"
+    icon: "mdi:robot"
+    initial: true
+
+  night_mode:
+    name: "Night Mode"
+    icon: "mdi:weather-night"
+    initial: false
+
+  away_mode:
+    name: "Away Mode"
+    icon: "mdi:home-export-outline"
+    initial: false
+
+  manual_override:
+    name: "Manual Override"
+    icon: "mdi:hand-back-right"
+    initial: false
+
+# ------------------------------------------------------------------------------
+# Input Numbers / Sliders for Dynamic Threshold Adjustment
+# ------------------------------------------------------------------------------
+input_number:
+  fan_high_temp_threshold:
+    name: "Fan ON Threshold (°C)"
+    min: 25
+    max: 40
+    step: 0.5
+    initial: 30.0
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer-chevron-up"
+
+  fan_low_temp_threshold:
+    name: "Fan OFF Threshold (°C)"
+    min: 20
+    max: 35
+    step: 0.5
+    initial: 28.0
+    unit_of_measurement: "°C"
+    icon: "mdi:thermometer-chevron-down"
+
+  motion_light_timeout:
+    name: "Motion Light Timeout (seconds)"
+    min: 10
+    max: 300
+    step: 5
+    initial: 30
+    unit_of_measurement: "s"
+    icon: "mdi:timer-sand"
+
+# ------------------------------------------------------------------------------
+# Template Sensors (Device Counts, System Health, Computed Status)
+# ------------------------------------------------------------------------------
+template:
+  - sensor:
+      - name: "Active Appliances Count"
+        unique_id: "active_appliances_count"
+        icon: "mdi:counter"
+        state: >
+          {{ [
+            is_state('switch.living_room_light', 'on'),
+            is_state('switch.bedroom_light', 'on'),
+            is_state('switch.living_room_fan', 'on')
+          ] | select('eq', true) | list | count }}
+        attributes:
+          active_devices: >
+            {% set devices = [] %}
+            {% if is_state('switch.living_room_light', 'on') %}{% set devices = devices + ['Living Room Light'] %}{% endif %}
+            {% if is_state('switch.bedroom_light', 'on') %}{% set devices = devices + ['Bedroom Light'] %}{% endif %}
+            {% if is_state('switch.living_room_fan', 'on') %}{% set devices = devices + ['Smart Fan'] %}{% endif %}
+            {{ devices }}
+
+      - name: "Total Appliances Count"
+        unique_id: "total_appliances_count"
+        icon: "mdi:devices"
+        state: "3"
+
+      - name: "Smart Home System Status"
+        unique_id: "smart_home_system_status"
+        icon: "mdi:server-network"
+        state: >
+          {% if is_state('input_boolean.away_mode', 'on') %}
+            Away (Secured)
+          {% elif is_state('input_boolean.night_mode', 'on') %}
+            Night Mode Active
+          {% elif is_state('input_boolean.manual_override', 'on') %}
+            Manual Override Engaged
+          {% elif is_state('input_boolean.automation_mode', 'on') %}
+            Auto Mode (Operational)
+          {% else %}
+            Manual Standby
+          {% endif %}
+
+      - name: "Climate Fan Auto Recommendation"
+        unique_id: "climate_fan_auto_rec"
+        icon: "mdi:fan-auto"
+        state: >
+          {% set temp = states('sensor.room_temperature') | float(default=25.0) %}
+          {% if temp >= 30.0 %}
+            COOLING REQUIRED (High Temp)
+          {% elif temp <= 28.0 %}
+            NORMAL (Standby)
+          {% else %}
+            HYSTERESIS ZONE
+          {% endif %}

@@ -1,0 +1,15 @@
+# Scenes definitions (optional presets)
+- id: "scene_welcome_home"
+  name: "Welcome Home"
+  entities:
+    switch.living_room_light: "on"
+    switch.bedroom_light: "off"
+    input_boolean.away_mode: "off"
+    input_boolean.automation_mode: "on"
+
+- id: "scene_all_off"
+  name: "All Off"
+  entities:
+    switch.living_room_light: "off"
+    switch.bedroom_light: "off"
+    switch.living_room_fan: "off"

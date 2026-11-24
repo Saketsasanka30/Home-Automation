@@ -1,0 +1,121 @@
+substitutions:
+  device_name: "home-automation-esp32"
+  friendly_name: "Smart Home Node"
+
+esphome:
+  name: ${device_name}
+  comment: "College IoT Home Automation Controller"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable Home Assistant native API for fast, zero-configuration integration
+api:
+  encryption:
+    key: "" # Optional noise encryption key; leave empty for open local dev
+
+ota:
+  - platform: esphome
+
+logger:
+  level: INFO
+
+wifi:
+  ssid: "YOUR_WIFI_SSID"
+  password: "YOUR_WIFI_PASSWORD"
+  # Fallback AP if WiFi connection fails
+  ap:
+    ssid: "SmartHome-Fallback-AP"
+    password: "fallbackPassword123"
+
+captive_portal:
+
+# ==========================================
+# HARDWARE SENSORS & ACTUATORS
+# ==========================================
+
+# 1. PIR Motion Sensor (HC-SR501 or AM312) connected to GPIO 13
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO13
+      mode:
+        input: true
+        pulldown: true
+    name: "Living Room Motion Sensor"
+    id: living_room_motion
+    device_class: motion
+    filters:
+      - delayed_off: 2s # Smooth out small sensor flickers
+
+# 2. DHT11 Temperature and Humidity Sensor connected to GPIO 4
+sensor:
+  - platform: dht
+    pin: GPIO4
+    model: DHT11
+    temperature:
+      name: "Room Temperature"
+      id: room_temperature
+      unit_of_measurement: "°C"
+      device_class: temperature
+      accuracy_decimals: 1
+      filters:
+        - median:
+            window_size: 5
+            send_every: 3
+            send_first_at: 1
+    humidity:
+      name: "Room Humidity"
+      id: room_humidity
+      unit_of_measurement: "%"
+      device_class: humidity
+      accuracy_decimals: 0
+      filters:
+        - median:
+            window_size: 5
+            send_every: 3
+            send_first_at: 1
+    update_interval: 10s
+
+  # Wi-Fi Signal Strength diagnostic
+  - platform: wifi_signal
+    name: "ESP32 WiFi Signal"
+    update_interval: 60s
+
+# 3. Relays and Light Simulation LEDs
+switch:
+  # Relay Channel 1: Living Room Light (Active-LOW optocoupled relay module)
+  - platform: gpio
+    pin:
+      number: GPIO18
+      inverted: true # Most standard relay modules are active LOW
+    name: "Living Room Light"
+    id: relay_living_room_light
+    icon: "mdi:lightbulb"
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # Relay Channel 2: DC Fan Control
+  - platform: gpio
+    pin:
+      number: GPIO19
+      inverted: true
+    name: "Living Room Fan"
+    id: relay_fan
+    icon: "mdi:fan"
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  # GPIO 21 / LED: Bedroom Light (or secondary light)
+  - platform: gpio
+    pin:
+      number: GPIO21
+      inverted: false # Standard LED: HIGH = ON
+    name: "Bedroom Light"
+    id: led_bedroom_light
+    icon: "mdi:ceiling-light"
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# Status LED indicator (ESP32 Built-in LED on GPIO2)
+status_led:
+  pin: GPIO2

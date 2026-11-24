@@ -1,0 +1,46 @@
+# ==============================================================================
+# Helper Scripts for Home Automation System
+# ==============================================================================
+
+all_appliances_off:
+  alias: "Turn OFF All Appliances"
+  icon: "mdi:power"
+  sequence:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.living_room_light
+          - switch.bedroom_light
+          - switch.living_room_fan
+
+reset_all_modes:
+  alias: "Reset to Normal Automatic Mode"
+  icon: "mdi:restore"
+  sequence:
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.automation_mode
+    - service: input_boolean.turn_off
+      target:
+        entity_id:
+          - input_boolean.away_mode
+          - input_boolean.night_mode
+          - input_boolean.manual_override
+
+test_alarm_flash:
+  alias: "Test Light Alert Blink"
+  icon: "mdi:alarm-light"
+  sequence:
+    - repeat:
+        count: 3
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: switch.living_room_light
+          - delay:
+              milliseconds: 400
+          - service: switch.turn_off
+            target:
+              entity_id: switch.living_room_light
+          - delay:
+              milliseconds: 400

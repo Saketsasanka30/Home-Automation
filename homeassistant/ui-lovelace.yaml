@@ -1,0 +1,160 @@
+# ==============================================================================
+# Modern Dark Smart-Home Dashboard (Lovelace UI)
+# Project: Home Automation System | Python, IoT & Home Assistant
+# ==============================================================================
+
+title: "Smart Home Control Hub"
+views:
+  - title: "Home Overview"
+    path: "overview"
+    icon: "mdi:home-variant"
+    type: "sidebar"
+    cards:
+      # ------------------------------------------------------------------------
+      # TOP HEADER / QUICK METRICS
+      # ------------------------------------------------------------------------
+      - type: horizontal-stack
+        cards:
+          - type: glance
+            title: "System Status"
+            show_name: true
+            show_state: true
+            entities:
+              - entity: sensor.smart_home_system_status
+                name: "Current State"
+                icon: "mdi:shield-home"
+              - entity: sensor.active_appliances_count
+                name: "Active Devices"
+                icon: "mdi:power-cycle"
+              - entity: sensor.total_appliances_count
+                name: "Total Devices"
+                icon: "mdi:devices"
+
+      # ------------------------------------------------------------------------
+      # SECTION 1: OVERVIEW & CLIMATE GAUGES
+      # ------------------------------------------------------------------------
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.room_temperature
+            name: "Room Temperature"
+            unit: "°C"
+            min: 15
+            max: 45
+            needle: true
+            severity:
+              green: 20
+              yellow: 28
+              red: 32
+
+          - type: gauge
+            entity: sensor.room_humidity
+            name: "Room Humidity"
+            unit: "%"
+            min: 0
+            max: 100
+            needle: true
+            severity:
+              green: 40
+              yellow: 65
+              red: 80
+
+      # ------------------------------------------------------------------------
+      # SECTION 2: LIGHTING CONTROLS (Living Room, Bedroom)
+      # ------------------------------------------------------------------------
+      - type: entities
+        title: "💡 Lighting Control Center"
+        show_header_toggle: false
+        entities:
+          - entity: switch.living_room_light
+            name: "Living Room Light (Relay 1)"
+            icon: "mdi:lightbulb-outline"
+          - entity: switch.bedroom_light
+            name: "Bedroom Light (GPIO 21)"
+            icon: "mdi:ceiling-light"
+          - type: divider
+          - entity: binary_sensor.living_room_motion
+            name: "PIR Motion Status"
+            icon: "mdi:motion-sensor"
+
+      # ------------------------------------------------------------------------
+      # SECTION 3: CLIMATE & FAN CONTROLS
+      # ------------------------------------------------------------------------
+      - type: entities
+        title: "❄️ Climate & Ventilation"
+        show_header_toggle: false
+        entities:
+          - entity: switch.living_room_fan
+            name: "Smart DC Fan (Relay 2)"
+            icon: "mdi:fan"
+          - entity: sensor.climate_fan_auto_rec
+            name: "Auto Cooling Advice"
+            icon: "mdi:fan-alert"
+          - entity: input_number.fan_high_temp_threshold
+            name: "Fan ON Threshold"
+          - entity: input_number.fan_low_temp_threshold
+            name: "Fan OFF Threshold"
+
+      # ------------------------------------------------------------------------
+      # SECTION 4: AUTOMATION MODES & TOGGLES
+      # ------------------------------------------------------------------------
+      - type: entities
+        title: "⚙️ Smart Automations & Modes"
+        show_header_toggle: false
+        entities:
+          - entity: input_boolean.automation_mode
+            name: "Master Automatic Mode"
+            icon: "mdi:robot"
+          - entity: input_boolean.night_mode
+            name: "Night Mode (Dim & Energy Saver)"
+            icon: "mdi:weather-night"
+          - entity: input_boolean.away_mode
+            name: "Away Mode (All Devices Off)"
+            icon: "mdi:shield-lock"
+          - entity: input_boolean.manual_override
+            name: "Manual User Override"
+            icon: "mdi:hand-back-right"
+
+      # ------------------------------------------------------------------------
+      # SECTION 5: ACTIVE AUTOMATIONS AUDIT & ACTIONS
+      # ------------------------------------------------------------------------
+      - type: entities
+        title: "📋 Automation Rules Audit"
+        show_header_toggle: false
+        entities:
+          - entity: automation.automation_1a_motion_lighting_turn_on
+            name: "Rule 1A: Motion Turn ON"
+          - entity: automation.automation_1b_motion_lighting_turn_off_after_30s
+            name: "Rule 1B: Motion 30s Turn OFF"
+          - entity: automation.automation_2a_temperature_fan_control_turn_on_30degc
+            name: "Rule 2A: Fan High Temp (>30°C)"
+          - entity: automation.automation_2b_temperature_fan_control_turn_off_28degc
+            name: "Rule 2B: Fan Low Temp (<28°C)"
+          - entity: automation.automation_3_night_mode_activation
+            name: "Rule 3: Night Routine"
+          - entity: automation.automation_4_away_mode_secure_energy_saver
+            name: "Rule 4: Away Mode Routine"
+          - entity: automation.automation_5_manual_override_state_manager
+            name: "Rule 5: Manual Override Monitor"
+
+      # Quick Action Buttons
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: "All Off"
+            icon: "mdi:power"
+            tap_action:
+              action: call-service
+              service: script.all_appliances_off
+          - type: button
+            name: "Reset Auto"
+            icon: "mdi:restore"
+            tap_action:
+              action: call-service
+              service: script.reset_all_modes
+          - type: button
+            name: "Test Blink"
+            icon: "mdi:alarm-light"
+            tap_action:
+              action: call-service
+              service: script.test_alarm_flash
