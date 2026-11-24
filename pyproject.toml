@@ -7,3 +7,9 @@ requires-python = ">=3.9"
 
 [tool.vercel]
 entrypoint = "app.py"
+
+[tool.pyright]
+extraPaths = ["python_backend"]
+
+[tool.pylance]
+extraPaths = ["python_backend"]

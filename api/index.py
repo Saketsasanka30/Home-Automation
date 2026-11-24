@@ -9,7 +9,10 @@ if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
 
 try:
-    from ha_controller import DeviceTracker, SensorDataProcessor, AutomationDecisionEngine
+    try:
+        from python_backend.ha_controller import DeviceTracker, SensorDataProcessor, AutomationDecisionEngine
+    except ImportError:
+        from ha_controller import DeviceTracker, SensorDataProcessor, AutomationDecisionEngine
     tracker = DeviceTracker()
     engine = AutomationDecisionEngine()
     processor = SensorDataProcessor()
