@@ -1,9 +1,10 @@
 # 🏡 Smart Home Automation System
-### *Built with ESP32, Home Assistant, Python & the HAVEN Spatial Dashboard*
+### *Built with ESP32, Home Assistant, Python, Blynk IoT & the HAVEN Spatial Dashboard*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-Core%20%7C%20OS-brightgreen.svg)](https://www.home-assistant.io/)
+[![Blynk IoT 2.0](https://img.shields.io/badge/Blynk-IoT%202.0%20Ready-00c853.svg)](docs/BLYNK_INTEGRATION_GUIDE.md)
 [![Hardware](https://img.shields.io/badge/Hardware-ESP32%20%7C%20DHT11%20%7C%20PIR%20%7C%20Relays-orange.svg)](#-the-physical-toys-hardware)
 
 ---
@@ -75,7 +76,9 @@ Home-Automation/
 ├── index.html                        # 🌐 Main web entry point (HAVEN interactive UI)
 │
 ├── esp32/
-│   ├── esphome_node.yaml             # ⚡ Plug-and-play ESPHome firmware for ESP32
+│   ├── esp32_blynk/
+│   │   └── esp32_blynk.ino           # 📱 Blynk IoT 2.0 firmware with pre-configured credentials
+│   ├── esphome_node.yaml             # ⚡ Plug-and-play ESPHome firmware for Home Assistant
 │   └── esp32_arduino_mqtt/
 │       └── esp32_arduino_mqtt.ino    # 🔌 Arduino C++ firmware with MQTT auto-discovery
 │
@@ -93,6 +96,7 @@ Home-Automation/
 │   └── requirements.txt             # 📦 Python dependencies
 │
 └── docs/
+    ├── BLYNK_INTEGRATION_GUIDE.md   # 📱 Complete Blynk 2.0 Template & Mobile App setup guide
     ├── CIRCUIT_AND_WIRING.md        # 📐 Breadboard pin connections & safety guide
     ├── SETUP_AND_INSTALLATION.md    # 🛠️ 10-step complete setup guide
     └── PROJECT_REPORT.md            # 🎓 15-section academic engineering project report & viva Q&A
@@ -126,6 +130,27 @@ python python_backend/mock_simulator.py
 ```
 
 You can press `1` to trigger motion, `3` to heat up the room, `6` to turn on Away Mode, and watch the appliances react instantly!
+
+---
+
+## 📱 Mobile & Cloud Control via Blynk IoT App
+
+This project features official **Blynk IoT 2.0 Cloud** support! Control your appliances and monitor temperature/humidity directly from your iOS or Android smartphone from anywhere in the world.
+
+### Virtual Pin Datastreams Mapping
+| Pin | Function | Hardware / Action |
+|:---:|---|---|
+| **V0** | Living Room Light | Relay 1 (GPIO 18, Active LOW) |
+| **V1** | Bedroom Light | LED Indicator (GPIO 21) |
+| **V2** | Smart DC Fan | Relay 2 (GPIO 19, Active LOW) |
+| **V3** | Live Temperature | DHT11 Sensor (GPIO 4, °C) |
+| **V4** | Live Humidity | DHT11 Sensor (GPIO 4, %) |
+| **V5** | Motion Detection | PIR Motion Sensor (GPIO 13) |
+| **V6** | Light Brightness | PWM / Atmosphere Dimmer (0-100%) |
+| **V7** | Thermostat Setpoint | Climate Target (16-30°C) |
+| **V9** | Away Security Mode | Disarm / Arm household |
+
+👉 **For the complete step-by-step mobile dashboard & cloud setup guide, see [`docs/BLYNK_INTEGRATION_GUIDE.md`](./docs/BLYNK_INTEGRATION_GUIDE.md).**
 
 ---
 

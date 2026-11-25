@@ -2148,9 +2148,9 @@
           <button class="tab-add-btn" id="btn-add-tab" title="Add device or custom scene">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
-          <div class="sync-badge" title="Live sync with Python / IoT backend">
-            <div class="sync-dot"></div>
-            <span>LIVE SYNC</span>
+          <div class="sync-badge" id="blynk-sync-badge" title="Blynk IoT Cloud Sync · Click to configure" style="cursor: pointer;">
+            <div class="sync-dot" id="blynk-sync-dot"></div>
+            <span id="blynk-sync-text">BLYNK IOT</span>
           </div>
         </nav>
 
@@ -2171,6 +2171,10 @@
           <button class="rail-btn" data-panel="security" title="Security & Away Mode">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             <span class="rail-tooltip">Security & Away</span>
+          </button>
+          <button class="rail-btn" data-panel="blynk" id="rail-btn-blynk" title="Blynk IoT Cloud">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+            <span class="rail-tooltip">Blynk Cloud IoT</span>
           </button>
           <button class="rail-btn" data-panel="settings" title="Dashboard Settings">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -2652,6 +2656,87 @@
   </div>
 
   <!-- ========================================================================
+       MODAL 6: BLYNK IOT CLOUD INTEGRATION MODAL
+       ======================================================================== -->
+  <div class="spatial-modal-backdrop" id="modal-blynk">
+    <div class="spatial-modal-card" style="max-width: 58rem;">
+      <div class="modal-header">
+        <h3 class="modal-title" style="display: flex; align-items: center; gap: 1rem;">
+          <svg style="width: 2.2rem; height: 2.2rem; stroke: var(--m2);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Blynk IoT Cloud Sync
+        </h3>
+        <button class="modal-close-btn" data-close="modal-blynk">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-row" style="background: rgba(0,0,0,0.25); border-radius: 1.4rem; padding: 1.2rem 1.6rem; border: 1px solid rgba(255,255,255,0.08);">
+          <div>
+            <div class="modal-row-label">Hardware Connection</div>
+            <div class="modal-row-sub" id="blynk-hw-status-sub">Checking cloud bridge...</div>
+          </div>
+          <span class="small-action-pill" id="blynk-hw-badge" style="background: rgba(60,196,180,0.15); color: var(--m2); border-color: rgba(60,196,180,0.3);">CONNECTING</span>
+        </div>
+
+        <div class="modal-row">
+          <div style="flex: 1;">
+            <div class="modal-row-label">Blynk Auth Token</div>
+            <div class="modal-row-sub">From your Blynk Web Console / Mobile App device info</div>
+            <input type="password" class="modal-input" id="input-blynk-token" value="uoGRAIK7HuhPRSeQQPfoN5p4yPTR2bq0" placeholder="Paste Auth Token" style="margin-top: 0.8rem; font-family: monospace; letter-spacing: 0.1em; width: 100%;">
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div class="modal-row-label">Template Details</div>
+            <div class="modal-row-sub">Template ID: <b>TMPL3fBWGrDdY</b> · Name: <b>Home automation system</b></div>
+          </div>
+          <button class="small-action-pill" id="btn-toggle-token-vis" style="padding: 0.6rem 1.2rem; font-size: 1.1rem;">Show Token</button>
+        </div>
+
+        <div class="modal-row" style="flex-direction: column; align-items: stretch; gap: 0.8rem;">
+          <div class="modal-row-label">Virtual Pin Datastream Mapping</div>
+          <div style="max-height: 14rem; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 1rem; padding: 1rem; font-size: 1.15rem; border: 1px solid rgba(255,255,255,0.08);">
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding-bottom: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-weight: 600;">
+              <span>PIN</span><span>FUNCTION</span><span>TYPE</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V0</span><span>Living Room Light (Relay 1 - GPIO 18)</span><span>Integer (0/1)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V1</span><span>Bedroom Light (LED - GPIO 21)</span><span>Integer (0/1)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V2</span><span>Smart DC Fan (Relay 2 - GPIO 19)</span><span>Integer (0/1)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V3</span><span>Temperature (DHT11 - GPIO 4)</span><span>Double (°C)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V4</span><span>Humidity (DHT11 - GPIO 4)</span><span>Integer (%)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V5</span><span>PIR Motion Sensor (GPIO 13)</span><span>Integer (0/1)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V6</span><span>Light Brightness Dimmer</span><span>Integer (0-100)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+              <span style="color: var(--m2); font-weight: 700;">V7</span><span>Thermostat Target Temperature</span><span>Double (16-30°C)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 5rem 1fr 10rem; gap: 0.6rem; padding: 0.5rem 0;">
+              <span style="color: var(--m2); font-weight: 700;">V9</span><span>Security Away Mode</span><span>Integer (0/1)</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <button class="small-action-pill" id="btn-blynk-test-ping" style="flex: 1; padding: 1.2rem; font-weight: 700;">Test Blynk Ping</button>
+          <button class="modal-primary-btn" id="btn-save-blynk" style="flex: 1.4; margin-top: 0;">Save & Connect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
        TOAST NOTIFICATION
        ======================================================================== -->
   <div id="spatial-toast">
@@ -3087,6 +3172,16 @@
       const modalAddDevice = document.getElementById('modal-add-device');
       const modalSecurity = document.getElementById('modal-security');
       const modalLighting = document.getElementById('modal-lighting');
+      const modalBlynk = document.getElementById('modal-blynk');
+      const blynkSyncBadge = document.getElementById('blynk-sync-badge');
+      const blynkSyncDot = document.getElementById('blynk-sync-dot');
+      const blynkSyncText = document.getElementById('blynk-sync-text');
+      const inputBlynkToken = document.getElementById('input-blynk-token');
+      const blynkHwStatusSub = document.getElementById('blynk-hw-status-sub');
+      const blynkHwBadge = document.getElementById('blynk-hw-badge');
+      const btnToggleTokenVis = document.getElementById('btn-toggle-token-vis');
+      const btnBlynkTestPing = document.getElementById('btn-blynk-test-ping');
+      const btnSaveBlynk = document.getElementById('btn-save-blynk');
 
       // Toast & rec
       const spatialToast = document.getElementById('spatial-toast');
@@ -3256,6 +3351,8 @@
             modalThermostat.classList.add('show');
           } else if (panelName === "security") {
             modalSecurity.classList.add('show');
+          } else if (panelName === "blynk") {
+            modalBlynk.classList.add('show');
           } else if (panelName === "settings") {
             modalSettings.classList.add('show');
           }
@@ -3480,6 +3577,7 @@
           rData.dialVal = finalVal;
           showToast(`${rData.dialName} set to ${formatTemp(finalVal)}`);
           syncWithBackend("set_thermostat", { room: currentRoomKey, temperature: finalVal });
+          sendBlynkUpdate("v7", finalVal);
         }
       }
 
@@ -3640,6 +3738,7 @@
         }
         updateRoomAtmosphere();
         syncWithBackend("toggle_light", { room: currentRoomKey, state: lightsOn, brightness });
+        sendBlynkUpdate("v0", lightsOn ? 1 : 0);
       }
 
       lightsToggle.addEventListener('click', (e) => {
@@ -3684,6 +3783,7 @@
           try { cardBrightness.releasePointerCapture(e.pointerId); } catch(err) {}
           showToast(`Brightness set to ${brightness}%`);
           syncWithBackend("set_brightness", { room: currentRoomKey, brightness });
+          sendBlynkUpdate("v6", brightness);
         }
       }
 
@@ -4048,6 +4148,173 @@
         playUiClickSound(500);
         modalLighting.classList.remove('show');
       });
+
+
+      // ------------------------------------------------------------------------
+      // BLYNK IOT 2.0 CLOUD SYNCHRONIZATION ENGINE
+      // ------------------------------------------------------------------------
+      let blynkAuthToken = localStorage.getItem('blynk_auth_token') || 'uoGRAIK7HuhPRSeQQPfoN5p4yPTR2bq0';
+      if (inputBlynkToken) inputBlynkToken.value = blynkAuthToken;
+      let blynkHardwareConnected = false;
+      let blynkInboundUpdate = false;
+      let blynkDebounceTimers = {};
+
+      function sendBlynkUpdate(pin, value) {
+        if (!blynkAuthToken || blynkInboundUpdate) return;
+        const cleanPin = pin.toLowerCase();
+        
+        if (cleanPin === 'v6' || cleanPin === 'v7') {
+          if (blynkDebounceTimers[cleanPin]) clearTimeout(blynkDebounceTimers[cleanPin]);
+          blynkDebounceTimers[cleanPin] = setTimeout(() => {
+            dispatchBlynkPost(cleanPin, value);
+          }, 300);
+          return;
+        }
+        dispatchBlynkPost(cleanPin, value);
+      }
+
+      function dispatchBlynkPost(pin, value) {
+        fetch('/api/blynk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: blynkAuthToken, pin, value })
+        }).catch(() => {
+          fetch(`https://blynk.cloud/external/api/update?token=${blynkAuthToken}&${pin}=${encodeURIComponent(value)}`, { mode: 'no-cors' }).catch(() => {});
+        });
+      }
+
+      function pollBlynkCloud() {
+        if (!blynkAuthToken) return;
+        fetch(`/api/blynk?token=${blynkAuthToken}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'online') {
+              blynkHardwareConnected = !!data.hardware_connected;
+              if (blynkSyncDot) {
+                blynkSyncDot.style.background = blynkHardwareConnected ? 'var(--m3)' : '#ffd166';
+                blynkSyncDot.style.boxShadow = blynkHardwareConnected ? '0 0 0.8rem var(--m3)' : '0 0 0.8rem #ffd166';
+              }
+              if (blynkSyncText) {
+                blynkSyncText.textContent = blynkHardwareConnected ? 'BLYNK ONLINE' : 'BLYNK READY';
+              }
+              if (blynkHwBadge) {
+                blynkHwBadge.textContent = blynkHardwareConnected ? 'ESP32 ONLINE' : 'STANDBY (NO ESP32)';
+                blynkHwBadge.style.color = blynkHardwareConnected ? 'var(--m2)' : '#ffd166';
+              }
+              if (blynkHwStatusSub) {
+                blynkHwStatusSub.textContent = blynkHardwareConnected 
+                  ? 'ESP32 hardware connected and streaming telemetry' 
+                  : 'Blynk Cloud active · ESP32 offline (waiting for device to connect)';
+              }
+
+              // Inbound Virtual Pin syncing
+              const pins = data.pins || {};
+              blynkInboundUpdate = true;
+              try {
+                if (pins.v0 !== undefined) {
+                  const v0Val = parseInt(pins.v0, 10);
+                  if (!isNaN(v0Val) && (v0Val === 1) !== lightsOn) {
+                    toggleLights(v0Val === 1);
+                  }
+                }
+                if (pins.v1 !== undefined) {
+                  const v1Val = parseInt(pins.v1, 10);
+                  const toggleBr = document.getElementById('modal-toggle-br');
+                  if (toggleBr && !isNaN(v1Val)) {
+                    toggleBr.classList.toggle('active', v1Val === 1);
+                  }
+                }
+                if (pins.v5 !== undefined) {
+                  const v5Val = parseInt(pins.v5, 10);
+                  if (v5Val === 1) {
+                    if (camMotionHud) camMotionHud.classList.add('active');
+                  } else {
+                    if (camMotionHud) camMotionHud.classList.remove('active');
+                  }
+                }
+                if (pins.v7 !== undefined) {
+                  const v7Val = parseFloat(pins.v7);
+                  if (!isNaN(v7Val) && Math.abs(v7Val - currentDialVal) >= 1 && !dialDragging) {
+                    currentDialVal = Math.round(v7Val);
+                    updateDialUI(currentDialVal, true);
+                  }
+                }
+              } finally {
+                blynkInboundUpdate = false;
+              }
+            } else {
+              if (blynkSyncDot) {
+                blynkSyncDot.style.background = '#ffd166';
+                blynkSyncDot.style.boxShadow = 'none';
+              }
+              if (blynkSyncText) blynkSyncText.textContent = 'BLYNK CLOUD';
+            }
+          })
+          .catch(() => {});
+      }
+
+      // Blynk UI Event Listeners
+      if (blynkSyncBadge) {
+        blynkSyncBadge.addEventListener('click', () => {
+          playUiClickSound(600);
+          modalBlynk.classList.add('show');
+        });
+      }
+
+      if (btnToggleTokenVis && inputBlynkToken) {
+        btnToggleTokenVis.addEventListener('click', () => {
+          playUiClickSound(500);
+          if (inputBlynkToken.type === 'password') {
+            inputBlynkToken.type = 'text';
+            btnToggleTokenVis.textContent = 'Hide Token';
+          } else {
+            inputBlynkToken.type = 'password';
+            btnToggleTokenVis.textContent = 'Show Token';
+          }
+        });
+      }
+
+      if (btnBlynkTestPing) {
+        btnBlynkTestPing.addEventListener('click', () => {
+          playUiClickSound(700);
+          btnBlynkTestPing.textContent = 'Pinging...';
+          const testToken = inputBlynkToken ? inputBlynkToken.value.trim() : blynkAuthToken;
+          const t0 = performance.now();
+          fetch(`/api/blynk?token=${testToken}`)
+            .then(res => res.json())
+            .then(data => {
+              const latency = Math.round(performance.now() - t0);
+              btnBlynkTestPing.textContent = 'Test Blynk Ping';
+              if (data.status === 'online') {
+                const hw = data.hardware_connected ? 'ESP32 Connected' : 'Device Offline';
+                showToast(`Blynk Ping: ${latency}ms · ${hw}`);
+              } else {
+                showToast(`Blynk Error: ${data.message || 'Cannot reach cloud'}`);
+              }
+            })
+            .catch(err => {
+              btnBlynkTestPing.textContent = 'Test Blynk Ping';
+              showToast(`Ping failed: ${err.message}`);
+            });
+        });
+      }
+
+      if (btnSaveBlynk) {
+        btnSaveBlynk.addEventListener('click', () => {
+          playUiClickSound(750);
+          if (inputBlynkToken) {
+            blynkAuthToken = inputBlynkToken.value.trim();
+            localStorage.setItem('blynk_auth_token', blynkAuthToken);
+          }
+          modalBlynk.classList.remove('show');
+          showToast('Blynk credentials saved · Connecting...');
+          pollBlynkCloud();
+        });
+      }
+
+      // Start Polling Blynk Cloud
+      setInterval(pollBlynkCloud, 3500);
+      pollBlynkCloud();
 
       // ------------------------------------------------------------------------
       // 13. AUTOMATED MOTION SIMULATION
